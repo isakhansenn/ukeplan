@@ -69,8 +69,9 @@ header{position:relative;display:flex;justify-content:center;align-items:center;
 #prev{order:1}#week{order:2}#next{order:3}
 .week-label{display:inline-flex;align-items:baseline;justify-content:center;gap:10px;min-width:0;font-size:20px;font-weight:620;letter-spacing:-.3px;color:#737982}
 .week-year{font-size:12px;font-weight:400;color:#a4a9b0;letter-spacing:0}
-.menu-wrap{position:absolute;right:0;top:50%;transform:translateY(-50%);margin:0}
+.menu-wrap{position:absolute;right:0;top:50%;transform:translateY(-50%);margin:0;display:flex;align-items:center;gap:2px}
 .menu-toggle{border:0!important;background:transparent!important;color:#7d838b!important;font-size:22px}
+.sync-toggle{border:0!important;background:transparent!important;color:#7d838b!important;font-size:23px;min-width:40px;min-height:43px;padding:5px 8px;border-radius:9px;cursor:pointer}.sync-toggle:hover{background:#eceef0!important;color:#40454b!important}.sync-toggle:disabled{opacity:.4;cursor:wait}
 .menu-toggle:hover{background:#eceef0!important;color:#40454b!important}
 .day-title{color:#777e87;font-weight:680}
 #backup-status{opacity:.62;font-size:11px!important;margin-bottom:10px!important;min-height:15px}
@@ -78,7 +79,8 @@ html[data-theme="dark"] .week-label,html[data-theme="dark"] .day-title{color:#a3
 html[data-theme="dark"] .week-year{color:#777}
 html[data-theme="dark"] #prev,html[data-theme="dark"] #next{color:#909090;background:transparent;border:0}
 html[data-theme="dark"] #prev:hover,html[data-theme="dark"] #next:hover{color:#ddd;background:#333}
-html[data-theme="dark"] .menu-toggle{color:#aaa!important;background:transparent!important;border:0!important}
+html[data-theme="dark"] .menu-toggle,html[data-theme="dark"] .sync-toggle{color:#aaa!important;background:transparent!important;border:0!important}
+html[data-theme="dark"] .sync-toggle:hover{background:#393939!important;color:#eee!important}
 html[data-theme="dark"] .menu-toggle:hover{background:#393939!important;color:#eee!important}
 @media(max-width:560px){header{min-height:48px}.week-label{font-size:19px;gap:6px}#prev,#next{padding:6px 8px}.menu-wrap{right:0}.nav{display:contents}}
 
@@ -90,7 +92,7 @@ html[data-theme="dark"] .carry-setting input{border-color:#666;color:#e5e5e5;col
 html[data-theme="dark"] .task.carried .text,html[data-theme="dark"] .task.carried .text *{color:#a3a3a3!important}
 </style>
 </head>
-<body><div class="wrap"><header><div class="nav"><button id="prev" aria-label="Forrige uke">←</button><span class="week-label" id="week"></span><button id="next" aria-label="Neste uke">→</button><div class="menu-wrap"><button class="action menu-toggle" id="menu-toggle" type="button" aria-label="Åpne meny" aria-haspopup="true" aria-expanded="false" aria-controls="app-menu">☰</button><div class="app-menu" id="app-menu" hidden><button id="current" type="button">Denne uken</button><button id="theme-toggle" type="button" aria-label="Bytt mellom lyst og mørkt tema" aria-pressed="false">Mørkt tema</button><div class="menu-separator"></div><label class="carry-setting" for="carry-time">Overføring av uferdige oppgaver <input id="carry-time" type="time" value="00:00"></label><button id="test-carry" type="button">Test overføring nå</button><div class="menu-separator"></div><button id="connect-backup" type="button">Velg sikkerhetskopifil</button><button id="export" type="button">Eksporter</button><button id="import" type="button">Importer</button></div></div><input type="file" id="import-file" accept=".json,application/json" hidden></div></header><div id="backup-status" role="status" aria-live="polite" style="font-size:11px;color:#777777;margin:0 0 12px">Lokalt lagret · Ingen automatisk sikkerhetskopi valgt</div><main class="grid" id="grid"></main></div>
+<body><div class="wrap"><header><div class="nav"><button id="prev" aria-label="Forrige uke">←</button><span class="week-label" id="week"></span><button id="next" aria-label="Neste uke">→</button><div class="menu-wrap"><button class="sync-toggle" id="sync-now" type="button" aria-label="Synkroniser" title="Synkroniser">⟳</button><button class="action menu-toggle" id="menu-toggle" type="button" aria-label="Åpne meny" aria-haspopup="true" aria-expanded="false" aria-controls="app-menu">☰</button><div class="app-menu" id="app-menu" hidden><button id="current" type="button">Denne uken</button><button id="theme-toggle" type="button" aria-label="Bytt mellom lyst og mørkt tema" aria-pressed="false">Mørkt tema</button><div class="menu-separator"></div><label class="carry-setting" for="carry-time">Overføring av uferdige oppgaver <input id="carry-time" type="time" value="00:00"></label><button id="test-carry" type="button">Test overføring nå</button><div class="menu-separator"></div><button id="connect-backup" type="button">Velg sikkerhetskopifil</button><button id="export" type="button">Eksporter</button><button id="import" type="button">Importer</button></div></div><input type="file" id="import-file" accept=".json,application/json" hidden></div></header><div id="backup-status" role="status" aria-live="polite" style="font-size:11px;color:#777777;margin:0 0 12px">Lagret OK</div><main class="grid" id="grid"></main></div>
 <script>
 (()=>{'use strict';
 
@@ -122,15 +124,24 @@ function nextWork(k){let d=addDays(parse(k),1);while(d.getDay()===0||d.getDay()=
 function todayWork(){let d=new Date();let x=new Date(d.getFullYear(),d.getMonth(),d.getDate(),12);while(x.getDay()===0||x.getDay()===6)x=addDays(x,1);return dateKey(x)}
 let backupHandle=null,backupQueue=Promise.resolve(),backupRevision=0;
 const backupStatus=document.getElementById('backup-status');
-// Vis status sjelden; feil vises straks. Lagring og sikkerhetskopiering kjører fortsatt som før.
-let lastStatusPaint=Date.now(),pendingStatus=null;
-function paintStatus(message,warning){backupStatus.textContent=message;backupStatus.style.color=warning?'#b45309':'';lastStatusPaint=Date.now()}
-function status(message,warning=false){
-  if(warning || /FEIL|feilet|Kunne ikke/i.test(message)){pendingStatus=null;paintStatus(message,true);return}
-  pendingStatus={message,warning};
-  if(Date.now()-lastStatusPaint>=30*60*1000){paintStatus(message,false);pendingStatus=null}
+// Oppgaver lagres umiddelbart. Kun statusvisningen oppdateres hvert 10. minutt.
+let lastStatusPaint=Date.now(),pendingStatus=null,latestStorageOK=true;
+function paintStatus(message,warning){
+  backupStatus.textContent=warning?'Lagring ikke OK':'Lagret OK';
+  backupStatus.title=message;
+  backupStatus.style.color=warning?'#b45309':'';
+  lastStatusPaint=Date.now();
 }
-setInterval(()=>{if(pendingStatus){paintStatus(pendingStatus.message,pendingStatus.warning);pendingStatus=null}},30*60*1000);
+function status(message,warning=false){
+  const localFailure=/FEIL: Kunne ikke lagre oppgavene lokalt/i.test(message);
+  if(localFailure)latestStorageOK=false;
+  else if(/Lagret lokalt|Lokal lagring/i.test(message))latestStorageOK=true;
+  const isWarning=warning || /FEIL|feilet|Kunne ikke/i.test(message);
+  if(isWarning){pendingStatus=null;paintStatus(message,true);return}
+  pendingStatus={message,warning:false};
+  if(Date.now()-lastStatusPaint>=10*60*1000){paintStatus(message,false);pendingStatus=null}
+}
+setInterval(()=>{if(pendingStatus){paintStatus(pendingStatus.message,pendingStatus.warning);pendingStatus=null}},10*60*1000);
 function backupPayload(){return JSON.stringify({format:'ukeplanlegger-backup',version:1,exportedAt:new Date().toISOString(),data:state},null,2)}
 function dbOpen(){return new Promise((resolve,reject)=>{const req=indexedDB.open('ukeplanlegger-backup-handle',1);req.onupgradeneeded=()=>req.result.createObjectStore('settings');req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error)})}
 async function storeHandle(handle){const db=await dbOpen();try{await new Promise((resolve,reject)=>{const tx=db.transaction('settings','readwrite');tx.objectStore('settings').put(handle,'file');tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error)})}finally{db.close()}}
@@ -147,6 +158,37 @@ const existing=await handle.getFile();if(existing.size>0){if(!confirm('Denne fil
 backupHandle=handle;await storeHandle(handle);scheduleBackup();connectButton.textContent='Bytt sikkerhetskopifil'
 }catch(e){if(e.name!=='AbortError')status('Kunne ikke koble til sikkerhetskopifilen: '+e.message,true)}});
 (async()=>{try{backupHandle=await restoreHandle();if(!backupHandle)return;const permission=await backupHandle.queryPermission({mode:'readwrite'});if(permission==='granted'){connectButton.textContent='Bytt sikkerhetskopifil';status('✓ Lokal lagring · Sikkerhetskopifil tilkoblet')}else{connectButton.textContent='Aktiver sikkerhetskopi';status('Lagret lokalt · Trykk «Aktiver sikkerhetskopi» for å gi filtilgang',true)}}catch(e){status('Lagret lokalt · Automatisk sikkerhetskopi er ikke tilgjengelig',true)}})();
+// PC: oppdater eksisterende sikkerhetskopifil. iPhone: velg fil fra OneDrive og importer.
+const syncNow=document.getElementById('sync-now');
+syncNow.addEventListener('click',async()=>{
+  if(syncNow.disabled)return;
+  syncNow.disabled=true;
+  try{
+    if(!('showSaveFilePicker' in window)){
+      document.getElementById('import-file').click();
+      return;
+    }
+    if(!backupHandle){
+      alert('Velg først en sikkerhetskopifil via ☰ → Velg sikkerhetskopifil.');
+      return;
+    }
+    let permission=await backupHandle.queryPermission({mode:'readwrite'});
+    if(permission!=='granted')permission=await backupHandle.requestPermission({mode:'readwrite'});
+    if(permission!=='granted'){
+      status('Sikkerhetskopien er ikke oppdatert: filtilgang mangler.',true);
+      return;
+    }
+    // Skriv nøyaktig nåværende tilstand, og vent til skrivingen er ferdig.
+    const snapshot=backupPayload();
+    ++backupRevision;
+    backupQueue=backupQueue.catch(()=>{}).then(()=>writeBackup(snapshot));
+    await backupQueue;
+    paintStatus('Sikkerhetskopien er oppdatert nå.',false);
+  }catch(e){
+    status('Synkronisering feilet: '+e.message,true);
+  }finally{syncNow.disabled=false}
+});
+
 // Previous-day snapshots are immutable; the active task is moved, not duplicated.
 function snapshot(t,day){
  t.history=Array.isArray(t.history)?t.history:[];
