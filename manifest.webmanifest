@@ -1,7 +1,7 @@
 {
-  "name": "Ukeplanlegger",
+  "name": "Ukeplan",
   "short_name": "Ukeplan",
-  "description": "Ukeplanlegger mandag til fredag",
+  "description": "Ukeplan mandag til fredag",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",

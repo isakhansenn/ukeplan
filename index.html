@@ -2,8 +2,8 @@
 <html lang="no">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Ukeplanlegger</title>
-<link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#f5f6f8"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Ukeplanlegger">
+<title>Ukeplan</title>
+<link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#f5f6f8"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Ukeplan">
 <style>
 :root{font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif;color:#253044;background:#f5f6f8}*{box-sizing:border-box}body{margin:0;padding:32px 20px}.wrap{max-width:1400px;margin:auto}header{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:28px}h1{font-size:27px;letter-spacing:-.8px;margin:0 0 6px}.sub{color:#7c8595;font-size:14px}.nav{display:flex;gap:8px;align-items:center;flex-wrap:wrap}button{font:inherit;cursor:pointer}.nav button,.action{border:1px solid #e0e4e9;background:white;border-radius:10px;padding:10px 13px;color:#344054}.nav button:hover,.action:hover{background:#f1f4f8}.week-label{font-weight:650;min-width:105px;text-align:center}.grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:14px}.day{background:white;border:1px solid #e9ebef;border-radius:16px;min-height:440px;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 3px 15px #24334d08}.day.today{border-color:#a5b8dd;box-shadow:0 0 0 2px #e3ebfa}.day-head{padding:20px 17px 15px;border-bottom:1px solid #f0f1f3}.day-title{font-size:15px;font-weight:750}.date{color:#9299a5;font-size:13px;margin-top:5px}.count{font-size:12px;color:#9299a5;margin-top:11px}.tasks{list-style:none;margin:0;padding:12px 10px;flex:1}.task{display:flex;align-items:flex-start;gap:9px;padding:11px 7px;border-radius:9px;border-bottom:1px solid #f4f5f6}.task:hover{background:#fafbfc}.task input{margin:3px 0 0;accent-color:#7189b6;cursor:pointer;flex-shrink:0}.task .text{flex:1;font-size:14px;line-height:1.45;overflow-wrap:anywhere;cursor:text;min-width:0}.task.done .text{color:#b1b7c1;text-decoration:line-through}.task.done{opacity:.65}.task .del{border:0;background:none;color:#b4bbc5;font-size:18px;line-height:1;visibility:hidden;padding:0 2px}.task:hover .del,.task .del:focus{visibility:visible}.add{margin:0 10px 12px;border:1px dashed #dce1e8;background:#fafbfd;border-radius:10px;padding:11px;display:flex;gap:7px}.add textarea{width:100%;min-width:0;background:transparent;border:0;outline:none;font:inherit;font-size:13px;line-height:1.5;resize:vertical;min-height:54px;tab-size:4}.add button{align-self:flex-end}.add button{border:0;border-radius:7px;background:#344b72;color:white;padding:5px 10px;font-size:18px}.hint{margin-top:20px;color:#9299a5;font-size:12px;line-height:1.6}.edit{width:100%;font:inherit;font-size:14px;line-height:1.45;border:1px solid #c9d5e7;border-radius:5px;padding:3px;resize:vertical;min-height:55px}@media(max-width:1100px){.grid{grid-template-columns:repeat(5,minmax(210px,1fr));overflow-x:auto;padding-bottom:12px}.day{min-height:440px}}@media(max-width:560px){body{padding:20px 12px}.grid{grid-template-columns:repeat(5,230px)}.nav{width:100%}.week-label{flex:1}}
 
@@ -21,11 +21,38 @@
 .task .del{visibility:visible;opacity:.45}.task:hover .del{opacity:1}
 .task .text[contenteditable=true]:empty:before{content:' ';color:#a2aab5}
 .day-head{padding-bottom:18px}
+
+/* Valgfritt mørkt tema; oppgaver og sikkerhetskopi påvirkes ikke. */
+:root{color-scheme:light}
+html[data-theme="dark"]{color-scheme:dark;background:#111827}
+html[data-theme="dark"] body{background:#111827;color:#e5e7eb}
+html[data-theme="dark"] .sub,html[data-theme="dark"] .date,html[data-theme="dark"] .hint,html[data-theme="dark"] .count{color:#9ca3af}
+html[data-theme="dark"] .day{background:#1f2937;border-color:#374151;box-shadow:0 3px 15px #0002}
+html[data-theme="dark"] .day.today{border-color:#7397c9;box-shadow:0 0 0 2px #31445e}
+html[data-theme="dark"] .day-head{border-bottom-color:#374151}
+html[data-theme="dark"] .nav button,html[data-theme="dark"] .action{background:#263244;color:#e5e7eb;border-color:#475569}
+html[data-theme="dark"] .nav button:hover,html[data-theme="dark"] .action:hover{background:#334155}
+html[data-theme="dark"] .task{border-bottom-color:#374151}
+html[data-theme="dark"] .task:hover{background:#293548}
+html[data-theme="dark"] .task .text:focus{background:#334155;box-shadow:0 0 0 5px #334155}
+html[data-theme="dark"] .task.done .text,html[data-theme="dark"] .task.done .text *{color:#9ca3af!important}
+html[data-theme="dark"] .task .del{color:#9ca3af}
+html[data-theme="dark"] .add.empty-first{border-bottom-color:#64748b}
+html[data-theme="dark"] .add textarea{color:#e5e7eb}
+html[data-theme="dark"] .add textarea::placeholder{color:#94a3b8}
+html[data-theme="dark"] .edit{background:#263244;color:#e5e7eb;border-color:#64748b}
+html[data-theme="dark"] #backup-status{color:#a5b4c7!important}
 </style>
 </head>
-<body><div class="wrap"><header><div><h1>Ukeplanlegger</h1><div class="sub">En enkel oversikt over det som skal gjøres.</div></div><div class="nav"><button id="prev" aria-label="Forrige uke">←</button><span class="week-label" id="week"></span><button id="next" aria-label="Neste uke">→</button><button id="current">Denne uken</button><button class="action" id="export" type="button">Eksporter</button><button class="action" id="import" type="button">Importer</button><input type="file" id="import-file" accept=".json,application/json" hidden></div></header><main class="grid" id="grid"></main></div>
+<body><div class="wrap"><header><div><h1>Ukeplan</h1><div class="sub">En enkel oversikt over det som skal gjøres.</div></div><div class="nav"><button id="prev" aria-label="Forrige uke">←</button><span class="week-label" id="week"></span><button id="next" aria-label="Neste uke">→</button><button id="current">Denne uken</button><button class="action" id="theme-toggle" type="button" aria-label="Bytt mellom lyst og mørkt tema" aria-pressed="false">Mørkt tema</button><button class="action" id="connect-backup" type="button">Velg sikkerhetskopifil</button><button class="action" id="export" type="button">Eksporter</button><button class="action" id="import" type="button">Importer</button><input type="file" id="import-file" accept=".json,application/json" hidden></div></header><div id="backup-status" role="status" aria-live="polite" style="font-size:12px;color:#64748b;margin:0 0 14px">Lokalt lagret · Ingen automatisk sikkerhetskopi valgt</div><main class="grid" id="grid"></main></div>
 <script>
 (()=>{'use strict';
+
+const themeKey='ukeplan-theme';
+const themeButton=document.getElementById('theme-toggle');
+function setTheme(theme){const dark=theme==='dark';document.documentElement.dataset.theme=dark?'dark':'light';themeButton.textContent=dark?'Lyst tema':'Mørkt tema';themeButton.setAttribute('aria-pressed',String(dark));document.querySelector('meta[name="theme-color"]').content=dark?'#111827':'#f5f6f8';}
+try{setTheme(localStorage.getItem(themeKey)==='dark'?'dark':'light')}catch{setTheme('light')}
+themeButton.addEventListener('click',()=>{const next=document.documentElement.dataset.theme==='dark'?'light':'dark';setTheme(next);try{localStorage.setItem(themeKey,next)}catch{}});
 const KEY='ukeplanlegger_v1';let state;try{state=JSON.parse(localStorage.getItem(KEY))||{tasks:[],lastProcessed:null}}catch{state={tasks:[],lastProcessed:null}};
 if(!Array.isArray(state.tasks))state.tasks=[];
 const names=['Mandag','Tirsdag','Onsdag','Torsdag','Fredag'];const pad=n=>String(n).padStart(2,'0');
@@ -35,7 +62,25 @@ function addDays(d,n){let x=new Date(d);x.setDate(x.getDate()+n);return x}
 function monday(d){let x=new Date(d.getFullYear(),d.getMonth(),d.getDate(),12);return addDays(x,-((x.getDay()+6)%7))}
 function nextWork(k){let d=addDays(parse(k),1);while(d.getDay()===0||d.getDay()===6)d=addDays(d,1);return dateKey(d)}
 function todayWork(){let d=new Date();let x=new Date(d.getFullYear(),d.getMonth(),d.getDate(),12);while(x.getDay()===0||x.getDay()===6)x=addDays(x,1);return dateKey(x)}
-function save(){try{localStorage.setItem(KEY,JSON.stringify(state))}catch{alert('Kunne ikke lagre oppgavene i nettleseren.')}}
+let backupHandle=null,backupQueue=Promise.resolve(),backupRevision=0;
+const backupStatus=document.getElementById('backup-status');
+function status(message,warning=false){backupStatus.textContent=message;backupStatus.style.color=warning?'#b45309':'#64748b'}
+function backupPayload(){return JSON.stringify({format:'ukeplanlegger-backup',version:1,exportedAt:new Date().toISOString(),data:state},null,2)}
+function dbOpen(){return new Promise((resolve,reject)=>{const req=indexedDB.open('ukeplanlegger-backup-handle',1);req.onupgradeneeded=()=>req.result.createObjectStore('settings');req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error)})}
+async function storeHandle(handle){const db=await dbOpen();try{await new Promise((resolve,reject)=>{const tx=db.transaction('settings','readwrite');tx.objectStore('settings').put(handle,'file');tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error)})}finally{db.close()}}
+async function restoreHandle(){const db=await dbOpen();try{return await new Promise((resolve,reject)=>{const tx=db.transaction('settings','readonly');const req=tx.objectStore('settings').get('file');req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error)})}finally{db.close()}}
+async function writeBackup(snapshot){if(!backupHandle)return;const permission=await backupHandle.queryPermission({mode:'readwrite'});if(permission!=='granted'){status('Lagret lokalt · Sikkerhetskopi trenger tilgang: trykk «Aktiver sikkerhetskopi»',true);document.getElementById('connect-backup').textContent='Aktiver sikkerhetskopi';return}const writable=await backupHandle.createWritable();await writable.write(snapshot);await writable.close();status('✓ Lagret lokalt · ✓ Sikkerhetskopiert til OneDrive-fil');document.getElementById('connect-backup').textContent='Bytt sikkerhetskopifil'}
+function scheduleBackup(){if(!backupHandle)return;const snapshot=backupPayload();const revision=++backupRevision;backupQueue=backupQueue.catch(()=>{}).then(async()=>{if(revision!==backupRevision)return;try{await writeBackup(snapshot)}catch(e){status('Lagret lokalt · Sikkerhetskopiering feilet: '+e.message,true)}})}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(state));status(backupHandle?'✓ Lagret lokalt · Sikkerhetskopierer …':'✓ Lagret lokalt · Ingen automatisk sikkerhetskopi valgt');scheduleBackup()}catch{status('FEIL: Kunne ikke lagre oppgavene lokalt!',true);alert('Kunne ikke lagre oppgavene i nettleseren.')}}
+const connectButton=document.getElementById('connect-backup');
+connectButton.addEventListener('click',async()=>{if(!('showSaveFilePicker' in window)){alert('Automatisk fillagring krever Chrome eller Edge på PC via HTTPS. Bruk Eksporter som reserve.');return}try{
+if(backupHandle&&connectButton.textContent==='Aktiver sikkerhetskopi'){const permission=await backupHandle.requestPermission({mode:'readwrite'});if(permission==='granted'){scheduleBackup();return}}
+const handle=await window.showSaveFilePicker({suggestedName:'ukeplanlegger_data.json',types:[{description:'JSON-sikkerhetskopi',accept:{'application/json':['.json']}}]});
+// Never silently overwrite an existing backup file.
+const existing=await handle.getFile();if(existing.size>0){if(!confirm('Denne filen inneholder allerede data. Hvis du fortsetter, overskrives den med oppgavene i appen. Har du kontrollert at det er riktig fil?'))return}
+backupHandle=handle;await storeHandle(handle);scheduleBackup();connectButton.textContent='Bytt sikkerhetskopifil'
+}catch(e){if(e.name!=='AbortError')status('Kunne ikke koble til sikkerhetskopifilen: '+e.message,true)}});
+(async()=>{try{backupHandle=await restoreHandle();if(!backupHandle)return;const permission=await backupHandle.queryPermission({mode:'readwrite'});if(permission==='granted'){connectButton.textContent='Bytt sikkerhetskopifil';status('✓ Lokal lagring · Sikkerhetskopifil tilkoblet')}else{connectButton.textContent='Aktiver sikkerhetskopi';status('Lagret lokalt · Trykk «Aktiver sikkerhetskopi» for å gi filtilgang',true)}}catch(e){status('Lagret lokalt · Automatisk sikkerhetskopi er ikke tilgjengelig',true)}})();
 // Tasks retain their original day and a movement trail, allowing historical weeks to remain viewable.
 function carry(){let today=dateKey(new Date());let changed=false;for(const t of state.tasks){if(t.done||t.pinnedPast||!t.day||t.day>=today)continue;let guard=0;while(t.day<today&&guard++<4000){let target=nextWork(t.day);if(target>today)break;t.history=t.history||[];t.history.push(t.day);t.day=target;changed=true;}}if(changed)save()}
 let shown=monday(new Date());const grid=document.getElementById('grid');
