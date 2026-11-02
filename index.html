@@ -47,6 +47,26 @@ html[data-theme="dark"] #backup-status{color:#b9b9b9!important}
 /* Kompakt toppmeny: bare ukevalg og piler er synlige. */
 .menu-wrap{position:relative;flex-shrink:0}.menu-toggle{min-width:43px;min-height:43px;font-size:22px;line-height:1;padding:8px 11px}.app-menu{position:absolute;z-index:50;right:0;top:calc(100% + 9px);width:min(270px,calc(100vw - 30px));padding:8px;background:#fff;border:1px solid #e0e4e9;border-radius:13px;box-shadow:0 12px 32px #0002}.app-menu[hidden]{display:none}.app-menu button{display:block;width:100%;text-align:left;border:0;background:transparent;border-radius:8px;padding:12px 11px;color:#344054;font-size:14px}.app-menu button:hover,.app-menu button:focus-visible{background:#f1f4f8}.menu-separator{height:1px;background:#e0e4e9;margin:6px 4px}html[data-theme="dark"] .app-menu{background:#303030;border-color:#565656;box-shadow:0 12px 32px #0008}html[data-theme="dark"] .app-menu button{color:#e5e7eb}html[data-theme="dark"] .app-menu button:hover,html[data-theme="dark"] .app-menu button:focus-visible{background:#484848}html[data-theme="dark"] .menu-separator{background:#565656}
 @media(max-width:560px){.nav{width:auto;max-width:100%;margin-left:auto}.week-label{flex:0 0 auto;min-width:92px}.menu-wrap{margin-left:2px}}
+
+/* Plasser det usynlige draområdet under slett-knappen til høyre. */
+.task .task-actions{display:flex;flex-direction:column;align-items:center;flex:0 0 20px;width:20px;gap:3px}
+.task .task-actions .del{width:20px;min-height:20px;padding:0;line-height:20px}
+.task .task-actions .drag-handle{display:block;width:20px;min-width:20px;height:22px;line-height:22px;opacity:0;cursor:grab;overflow:hidden;touch-action:none}
+.task .task-actions .drag-handle:focus-visible{opacity:1}
+
+/* Mer plass til oppgavetekst: kun justering av layout, ingen endring av oppgavelogikk. */
+body{padding:22px 12px}
+.wrap{max-width:none;width:100%}
+.grid{gap:9px}
+.day-head{padding-left:12px;padding-right:12px}
+.tasks{padding:10px 6px}
+.task{gap:6px;padding:10px 3px}
+.task .task-actions{flex-basis:18px;width:18px}
+.task .task-actions .del{width:18px}
+.task .task-actions .drag-handle{width:18px;min-width:18px}
+.add.empty-first{margin-left:12px;margin-right:12px}
+@media(max-width:1100px){.grid{grid-template-columns:repeat(5,minmax(225px,1fr))}}
+@media(max-width:560px){body{padding:16px 8px}.grid{grid-template-columns:repeat(5,245px);gap:8px}}
 </style>
 </head>
 <body><div class="wrap"><header><div><h1>Ukeplan</h1><div class="sub">En enkel oversikt over det som skal gjøres.</div></div><div class="nav"><button id="prev" aria-label="Forrige uke">←</button><span class="week-label" id="week"></span><button id="next" aria-label="Neste uke">→</button><div class="menu-wrap"><button class="action menu-toggle" id="menu-toggle" type="button" aria-label="Åpne meny" aria-haspopup="true" aria-expanded="false" aria-controls="app-menu">☰</button><div class="app-menu" id="app-menu" hidden><button id="current" type="button">Denne uken</button><button id="theme-toggle" type="button" aria-label="Bytt mellom lyst og mørkt tema" aria-pressed="false">Mørkt tema</button><div class="menu-separator"></div><button id="connect-backup" type="button">Velg sikkerhetskopifil</button><button id="export" type="button">Eksporter</button><button id="import" type="button">Importer</button></div></div><input type="file" id="import-file" accept=".json,application/json" hidden></div></header><div id="backup-status" role="status" aria-live="polite" style="font-size:12px;color:#777777;margin:0 0 14px">Lokalt lagret · Ingen automatisk sikkerhetskopi valgt</div><main class="grid" id="grid"></main></div>
@@ -126,16 +146,16 @@ function taskRow(t,historical,displayDay){
  }
  li.dataset.taskId=t.id;
  if(!historical){
-   const handle=document.createElement('span');handle.className='drag-handle';handle.textContent='⠿';handle.title='Dra fra feltet til venstre for avkrysningsboksen for å flytte oppgaven';handle.setAttribute('aria-label','Dra oppgaven');handle.draggable=true;
+   const handle=document.createElement('span');handle.className='drag-handle';handle.textContent='⠿';handle.title='Dra fra feltet rett under slett-knappen for å flytte oppgaven';handle.setAttribute('aria-label','Dra oppgaven');handle.draggable=true;
    handle.addEventListener('dragstart',e=>{draggedTaskId=t.id;e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('text/plain',t.id);li.classList.add('dragging')});
    handle.addEventListener('dragend',()=>{draggedTaskId=null;document.querySelectorAll('.drag-over,.dragging').forEach(el=>el.classList.remove('drag-over','dragging'))});
-   li.append(handle);
+   const actions=document.createElement('div');actions.className='task-actions';actions.append(handle);
    li.addEventListener('dragover',e=>{if(!draggedTaskId||draggedTaskId===t.id)return;e.preventDefault();e.stopPropagation();e.dataTransfer.dropEffect='move';li.classList.add('drag-over')});
    li.addEventListener('dragleave',()=>li.classList.remove('drag-over'));
    li.addEventListener('drop',e=>{if(!draggedTaskId)return;e.preventDefault();e.stopPropagation();moveTask(draggedTaskId,displayDay,t.id);draggedTaskId=null});
  }
  li.append(box,span);
- if(!historical){let del=document.createElement('button');del.className='del';del.textContent='×';del.title='Slett oppgave';del.setAttribute('aria-label','Slett oppgave');del.addEventListener('click',()=>{if(confirm('Slette oppgaven?')){state.tasks=state.tasks.filter(x=>x.id!==t.id);save();render()}});li.append(del)}
+ if(!historical){let del=document.createElement('button');del.className='del';del.textContent='×';del.title='Slett oppgave';del.setAttribute('aria-label','Slett oppgave');del.addEventListener('click',()=>{if(confirm('Slette oppgaven?')){state.tasks=state.tasks.filter(x=>x.id!==t.id);save();render()}});actions.prepend(del);li.append(actions)}
  return li
 }
 function render(){carry();const w=weekNo(shown);document.getElementById('week').textContent=`Uke ${w.n} · ${w.y}`;grid.replaceChildren();let today=dateKey(new Date());for(let i=0;i<5;i++){let d=addDays(shown,i),key=dateKey(d);let card=document.createElement('section');card.className='day'+(key===today?' today':'');let head=document.createElement('div');head.className='day-head';let title=document.createElement('div');title.className='day-title';title.textContent=names[i];let date=document.createElement('div');date.className='date';date.textContent=d.toLocaleDateString('nb-NO',{day:'numeric',month:'long'});let actual=state.tasks.filter(t=>t.day===key);let historical=state.tasks.filter(t=>t.day!==key&&Array.isArray(t.history)&&t.history.includes(key));let active=actual.filter(t=>!t.done);let done=actual.filter(t=>t.done);head.append(title,date);let list=document.createElement('ul');list.className='tasks';
