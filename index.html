@@ -24,34 +24,45 @@
 
 /* Valgfritt mørkt tema; oppgaver og sikkerhetskopi påvirkes ikke. */
 :root{color-scheme:light}
-html[data-theme="dark"]{color-scheme:dark;background:#111827}
-html[data-theme="dark"] body{background:#111827;color:#e5e7eb}
+html[data-theme="dark"]{color-scheme:dark;background:#202020}
+html[data-theme="dark"] body{background:#202020;color:#e5e7eb}
 html[data-theme="dark"] .sub,html[data-theme="dark"] .date,html[data-theme="dark"] .hint,html[data-theme="dark"] .count{color:#9ca3af}
-html[data-theme="dark"] .day{background:#1f2937;border-color:#374151;box-shadow:0 3px 15px #0002}
-html[data-theme="dark"] .day.today{border-color:#7397c9;box-shadow:0 0 0 2px #31445e}
-html[data-theme="dark"] .day-head{border-bottom-color:#374151}
-html[data-theme="dark"] .nav button,html[data-theme="dark"] .action{background:#263244;color:#e5e7eb;border-color:#475569}
-html[data-theme="dark"] .nav button:hover,html[data-theme="dark"] .action:hover{background:#334155}
-html[data-theme="dark"] .task{border-bottom-color:#374151}
-html[data-theme="dark"] .task:hover{background:#293548}
-html[data-theme="dark"] .task .text:focus{background:#334155;box-shadow:0 0 0 5px #334155}
+html[data-theme="dark"] .day{background:#2b2b2b;border-color:#414141;box-shadow:0 3px 15px #0002}
+html[data-theme="dark"] .day.today{border-color:#8e8e8e;box-shadow:0 0 0 2px #474747}
+html[data-theme="dark"] .day-head{border-bottom-color:#414141}
+html[data-theme="dark"] .nav button,html[data-theme="dark"] .action{background:#363636;color:#e5e7eb;border-color:#565656}
+html[data-theme="dark"] .nav button:hover,html[data-theme="dark"] .action:hover{background:#484848}
+html[data-theme="dark"] .task{border-bottom-color:#414141}
+html[data-theme="dark"] .task:hover{background:#343434}
+html[data-theme="dark"] .task .text:focus{background:#484848;box-shadow:0 0 0 5px #484848}
 html[data-theme="dark"] .task.done .text,html[data-theme="dark"] .task.done .text *{color:#9ca3af!important}
 html[data-theme="dark"] .task .del{color:#9ca3af}
-html[data-theme="dark"] .add.empty-first{border-bottom-color:#64748b}
+html[data-theme="dark"] .add.empty-first{border-bottom-color:#777777}
 html[data-theme="dark"] .add textarea{color:#e5e7eb}
-html[data-theme="dark"] .add textarea::placeholder{color:#94a3b8}
-html[data-theme="dark"] .edit{background:#263244;color:#e5e7eb;border-color:#64748b}
-html[data-theme="dark"] #backup-status{color:#a5b4c7!important}
-.drag-handle{flex-shrink:0;color:#94a3b8;cursor:grab;user-select:none;touch-action:none;font-size:19px;line-height:20px;padding:0 2px}.drag-handle:active{cursor:grabbing}.task.dragging{opacity:.35}.task.drag-over{box-shadow:inset 0 3px #6687bc}.tasks.drag-over{outline:2px dashed #8ba4cb;outline-offset:-4px;border-radius:9px}html[data-theme="dark"] .drag-handle{color:#a3b2c9}html[data-theme="dark"] .tasks.drag-over{outline-color:#93b4e5}
+html[data-theme="dark"] .add textarea::placeholder{color:#a0a0a0}
+html[data-theme="dark"] .edit{background:#363636;color:#e5e7eb;border-color:#777777}
+html[data-theme="dark"] #backup-status{color:#b9b9b9!important}
+.drag-handle{flex-shrink:0;color:#a0a0a0;cursor:grab;user-select:none;touch-action:none;font-size:19px;line-height:20px;padding:0 2px}.drag-handle{opacity:0;width:17px;min-width:17px;padding:0;overflow:hidden}.drag-handle:focus-visible{opacity:1;outline:2px solid currentColor;outline-offset:2px}.drag-handle:active{cursor:grabbing}.task.dragging{opacity:.35}.task.drag-over{box-shadow:inset 0 3px #969696}.tasks.drag-over{outline:2px dashed #8d8d8d;outline-offset:-4px;border-radius:9px}html[data-theme="dark"] .drag-handle{color:#b2b2b2}html[data-theme="dark"] .tasks.drag-over{outline-color:#b0b0b0}
+
+/* Kompakt toppmeny: bare ukevalg og piler er synlige. */
+.menu-wrap{position:relative;flex-shrink:0}.menu-toggle{min-width:43px;min-height:43px;font-size:22px;line-height:1;padding:8px 11px}.app-menu{position:absolute;z-index:50;right:0;top:calc(100% + 9px);width:min(270px,calc(100vw - 30px));padding:8px;background:#fff;border:1px solid #e0e4e9;border-radius:13px;box-shadow:0 12px 32px #0002}.app-menu[hidden]{display:none}.app-menu button{display:block;width:100%;text-align:left;border:0;background:transparent;border-radius:8px;padding:12px 11px;color:#344054;font-size:14px}.app-menu button:hover,.app-menu button:focus-visible{background:#f1f4f8}.menu-separator{height:1px;background:#e0e4e9;margin:6px 4px}html[data-theme="dark"] .app-menu{background:#303030;border-color:#565656;box-shadow:0 12px 32px #0008}html[data-theme="dark"] .app-menu button{color:#e5e7eb}html[data-theme="dark"] .app-menu button:hover,html[data-theme="dark"] .app-menu button:focus-visible{background:#484848}html[data-theme="dark"] .menu-separator{background:#565656}
+@media(max-width:560px){.nav{width:auto;max-width:100%;margin-left:auto}.week-label{flex:0 0 auto;min-width:92px}.menu-wrap{margin-left:2px}}
 </style>
 </head>
-<body><div class="wrap"><header><div><h1>Ukeplan</h1><div class="sub">En enkel oversikt over det som skal gjøres.</div></div><div class="nav"><button id="prev" aria-label="Forrige uke">←</button><span class="week-label" id="week"></span><button id="next" aria-label="Neste uke">→</button><button id="current">Denne uken</button><button class="action" id="theme-toggle" type="button" aria-label="Bytt mellom lyst og mørkt tema" aria-pressed="false">Mørkt tema</button><button class="action" id="connect-backup" type="button">Velg sikkerhetskopifil</button><button class="action" id="export" type="button">Eksporter</button><button class="action" id="import" type="button">Importer</button><input type="file" id="import-file" accept=".json,application/json" hidden></div></header><div id="backup-status" role="status" aria-live="polite" style="font-size:12px;color:#64748b;margin:0 0 14px">Lokalt lagret · Ingen automatisk sikkerhetskopi valgt</div><main class="grid" id="grid"></main></div>
+<body><div class="wrap"><header><div><h1>Ukeplan</h1><div class="sub">En enkel oversikt over det som skal gjøres.</div></div><div class="nav"><button id="prev" aria-label="Forrige uke">←</button><span class="week-label" id="week"></span><button id="next" aria-label="Neste uke">→</button><div class="menu-wrap"><button class="action menu-toggle" id="menu-toggle" type="button" aria-label="Åpne meny" aria-haspopup="true" aria-expanded="false" aria-controls="app-menu">☰</button><div class="app-menu" id="app-menu" hidden><button id="current" type="button">Denne uken</button><button id="theme-toggle" type="button" aria-label="Bytt mellom lyst og mørkt tema" aria-pressed="false">Mørkt tema</button><div class="menu-separator"></div><button id="connect-backup" type="button">Velg sikkerhetskopifil</button><button id="export" type="button">Eksporter</button><button id="import" type="button">Importer</button></div></div><input type="file" id="import-file" accept=".json,application/json" hidden></div></header><div id="backup-status" role="status" aria-live="polite" style="font-size:12px;color:#777777;margin:0 0 14px">Lokalt lagret · Ingen automatisk sikkerhetskopi valgt</div><main class="grid" id="grid"></main></div>
 <script>
 (()=>{'use strict';
 
+const menuToggle=document.getElementById('menu-toggle');
+const appMenu=document.getElementById('app-menu');
+function closeMenu(){appMenu.hidden=true;menuToggle.setAttribute('aria-expanded','false');menuToggle.setAttribute('aria-label','Åpne meny')}
+menuToggle.addEventListener('click',()=>{const open=appMenu.hidden;appMenu.hidden=!open;menuToggle.setAttribute('aria-expanded',String(open));menuToggle.setAttribute('aria-label',open?'Lukk meny':'Åpne meny')});
+document.addEventListener('pointerdown',e=>{if(!e.target.closest('.menu-wrap'))closeMenu()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeMenu();menuToggle.focus()}});
+appMenu.addEventListener('click',e=>{if(e.target.closest('button'))closeMenu()});
 const themeKey='ukeplan-theme';
 const themeButton=document.getElementById('theme-toggle');
-function setTheme(theme){const dark=theme==='dark';document.documentElement.dataset.theme=dark?'dark':'light';themeButton.textContent=dark?'Lyst tema':'Mørkt tema';themeButton.setAttribute('aria-pressed',String(dark));document.querySelector('meta[name="theme-color"]').content=dark?'#111827':'#f5f6f8';}
+function setTheme(theme){const dark=theme==='dark';document.documentElement.dataset.theme=dark?'dark':'light';themeButton.textContent=dark?'Lyst tema':'Mørkt tema';themeButton.setAttribute('aria-pressed',String(dark));document.querySelector('meta[name="theme-color"]').content=dark?'#202020':'#f5f6f8';}
 try{setTheme(localStorage.getItem(themeKey)==='dark'?'dark':'light')}catch{setTheme('light')}
 themeButton.addEventListener('click',()=>{const next=document.documentElement.dataset.theme==='dark'?'light':'dark';setTheme(next);try{localStorage.setItem(themeKey,next)}catch{}});
 const KEY='ukeplanlegger_v1';let state;try{state=JSON.parse(localStorage.getItem(KEY))||{tasks:[],lastProcessed:null}}catch{state={tasks:[],lastProcessed:null}};
@@ -65,7 +76,7 @@ function nextWork(k){let d=addDays(parse(k),1);while(d.getDay()===0||d.getDay()=
 function todayWork(){let d=new Date();let x=new Date(d.getFullYear(),d.getMonth(),d.getDate(),12);while(x.getDay()===0||x.getDay()===6)x=addDays(x,1);return dateKey(x)}
 let backupHandle=null,backupQueue=Promise.resolve(),backupRevision=0;
 const backupStatus=document.getElementById('backup-status');
-function status(message,warning=false){backupStatus.textContent=message;backupStatus.style.color=warning?'#b45309':'#64748b'}
+function status(message,warning=false){backupStatus.textContent=message;backupStatus.style.color=warning?'#b45309':'#777777'}
 function backupPayload(){return JSON.stringify({format:'ukeplanlegger-backup',version:1,exportedAt:new Date().toISOString(),data:state},null,2)}
 function dbOpen(){return new Promise((resolve,reject)=>{const req=indexedDB.open('ukeplanlegger-backup-handle',1);req.onupgradeneeded=()=>req.result.createObjectStore('settings');req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error)})}
 async function storeHandle(handle){const db=await dbOpen();try{await new Promise((resolve,reject)=>{const tx=db.transaction('settings','readwrite');tx.objectStore('settings').put(handle,'file');tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error)})}finally{db.close()}}
@@ -115,7 +126,7 @@ function taskRow(t,historical,displayDay){
  }
  li.dataset.taskId=t.id;
  if(!historical){
-   const handle=document.createElement('span');handle.className='drag-handle';handle.textContent='⠿';handle.title='Dra oppgaven for å flytte den';handle.setAttribute('aria-label','Dra oppgaven');handle.draggable=true;
+   const handle=document.createElement('span');handle.className='drag-handle';handle.textContent='⠿';handle.title='Dra fra feltet til venstre for avkrysningsboksen for å flytte oppgaven';handle.setAttribute('aria-label','Dra oppgaven');handle.draggable=true;
    handle.addEventListener('dragstart',e=>{draggedTaskId=t.id;e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('text/plain',t.id);li.classList.add('dragging')});
    handle.addEventListener('dragend',()=>{draggedTaskId=null;document.querySelectorAll('.drag-over,.dragging').forEach(el=>el.classList.remove('drag-over','dragging'))});
    li.append(handle);
