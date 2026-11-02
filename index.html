@@ -81,9 +81,16 @@ html[data-theme="dark"] #prev:hover,html[data-theme="dark"] #next:hover{color:#d
 html[data-theme="dark"] .menu-toggle{color:#aaa!important;background:transparent!important;border:0!important}
 html[data-theme="dark"] .menu-toggle:hover{background:#393939!important;color:#eee!important}
 @media(max-width:560px){header{min-height:48px}.week-label{font-size:19px;gap:6px}#prev,#next{padding:6px 8px}.menu-wrap{right:0}.nav{display:contents}}
+
+.carry-setting{display:flex;flex-direction:column;gap:8px;padding:10px 11px;color:#7d838b;font-size:12px}
+.carry-setting input{width:100%;padding:7px 9px;border-radius:8px;border:1px solid #c7cbd0;background:transparent;color:inherit;font:inherit;font-size:14px}
+html[data-theme="dark"] .carry-setting{color:#b6b6b6}
+html[data-theme="dark"] .carry-setting input{border-color:#666;color:#e5e5e5;color-scheme:dark}
+.task.carried{opacity:.48}.task.carried .text,.task.carried .text *{color:#90949b!important;text-decoration:none!important}.task .carried-mark{width:14px;flex:0 0 14px;margin-top:1px;font-size:16px;line-height:19px;color:#8c9096;text-align:center}
+html[data-theme="dark"] .task.carried .text,html[data-theme="dark"] .task.carried .text *{color:#a3a3a3!important}
 </style>
 </head>
-<body><div class="wrap"><header><div class="nav"><button id="prev" aria-label="Forrige uke">←</button><span class="week-label" id="week"></span><button id="next" aria-label="Neste uke">→</button><div class="menu-wrap"><button class="action menu-toggle" id="menu-toggle" type="button" aria-label="Åpne meny" aria-haspopup="true" aria-expanded="false" aria-controls="app-menu">☰</button><div class="app-menu" id="app-menu" hidden><button id="current" type="button">Denne uken</button><button id="theme-toggle" type="button" aria-label="Bytt mellom lyst og mørkt tema" aria-pressed="false">Mørkt tema</button><div class="menu-separator"></div><button id="connect-backup" type="button">Velg sikkerhetskopifil</button><button id="export" type="button">Eksporter</button><button id="import" type="button">Importer</button></div></div><input type="file" id="import-file" accept=".json,application/json" hidden></div></header><div id="backup-status" role="status" aria-live="polite" style="font-size:11px;color:#777777;margin:0 0 12px">Lokalt lagret · Ingen automatisk sikkerhetskopi valgt</div><main class="grid" id="grid"></main></div>
+<body><div class="wrap"><header><div class="nav"><button id="prev" aria-label="Forrige uke">←</button><span class="week-label" id="week"></span><button id="next" aria-label="Neste uke">→</button><div class="menu-wrap"><button class="action menu-toggle" id="menu-toggle" type="button" aria-label="Åpne meny" aria-haspopup="true" aria-expanded="false" aria-controls="app-menu">☰</button><div class="app-menu" id="app-menu" hidden><button id="current" type="button">Denne uken</button><button id="theme-toggle" type="button" aria-label="Bytt mellom lyst og mørkt tema" aria-pressed="false">Mørkt tema</button><div class="menu-separator"></div><label class="carry-setting" for="carry-time">Overføring av uferdige oppgaver <input id="carry-time" type="time" value="00:00"></label><button id="test-carry" type="button">Test overføring nå</button><div class="menu-separator"></div><button id="connect-backup" type="button">Velg sikkerhetskopifil</button><button id="export" type="button">Eksporter</button><button id="import" type="button">Importer</button></div></div><input type="file" id="import-file" accept=".json,application/json" hidden></div></header><div id="backup-status" role="status" aria-live="polite" style="font-size:11px;color:#777777;margin:0 0 12px">Lokalt lagret · Ingen automatisk sikkerhetskopi valgt</div><main class="grid" id="grid"></main></div>
 <script>
 (()=>{'use strict';
 
@@ -101,6 +108,11 @@ try{setTheme(localStorage.getItem(themeKey)==='dark'?'dark':'light')}catch{setTh
 themeButton.addEventListener('click',()=>{const next=document.documentElement.dataset.theme==='dark'?'light':'dark';setTheme(next);try{localStorage.setItem(themeKey,next)}catch{}});
 const KEY='ukeplanlegger_v1';let state;try{state=JSON.parse(localStorage.getItem(KEY))||{tasks:[],lastProcessed:null}}catch{state={tasks:[],lastProcessed:null}};
 if(!Array.isArray(state.tasks))state.tasks=[];
+const CARRY_TIME_KEY='ukeplan-carry-time';
+let carryTime='00:00';try{const stored=localStorage.getItem(CARRY_TIME_KEY);if(/^([01]\d|2[0-3]):[0-5]\d$/.test(stored||''))carryTime=stored}catch{}
+const carryInput=document.getElementById('carry-time');carryInput.value=carryTime;
+carryInput.addEventListener('change',()=>{if(!/^([01]\d|2[0-3]):[0-5]\d$/.test(carryInput.value))return;carryTime=carryInput.value;localStorage.setItem(CARRY_TIME_KEY,carryTime);render()});
+
 const names=['Mandag','Tirsdag','Onsdag','Torsdag','Fredag'];const pad=n=>String(n).padStart(2,'0');
 function dateKey(d){return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`}
 function parse(k){let [y,m,d]=k.split('-').map(Number);return new Date(y,m-1,d,12)}
@@ -135,8 +147,37 @@ const existing=await handle.getFile();if(existing.size>0){if(!confirm('Denne fil
 backupHandle=handle;await storeHandle(handle);scheduleBackup();connectButton.textContent='Bytt sikkerhetskopifil'
 }catch(e){if(e.name!=='AbortError')status('Kunne ikke koble til sikkerhetskopifilen: '+e.message,true)}});
 (async()=>{try{backupHandle=await restoreHandle();if(!backupHandle)return;const permission=await backupHandle.queryPermission({mode:'readwrite'});if(permission==='granted'){connectButton.textContent='Bytt sikkerhetskopifil';status('✓ Lokal lagring · Sikkerhetskopifil tilkoblet')}else{connectButton.textContent='Aktiver sikkerhetskopi';status('Lagret lokalt · Trykk «Aktiver sikkerhetskopi» for å gi filtilgang',true)}}catch(e){status('Lagret lokalt · Automatisk sikkerhetskopi er ikke tilgjengelig',true)}})();
-// Tasks retain their original day and a movement trail, allowing historical weeks to remain viewable.
-function carry(){let today=dateKey(new Date());let changed=false;for(const t of state.tasks){if(t.done||t.pinnedPast||!t.day||t.day>=today)continue;let guard=0;while(t.day<today&&guard++<4000){let target=nextWork(t.day);if(target>today)break;t.history=t.history||[];t.history.push(t.day);t.day=target;changed=true;}}if(changed)save()}
+// Previous-day snapshots are immutable; the active task is moved, not duplicated.
+function snapshot(t,day){
+ t.history=Array.isArray(t.history)?t.history:[];
+ if(!t.history.some(h=>(typeof h==='string'?h:h.day)===day))
+   t.history.push({day,html:t.html||'',text:t.text||''});
+}
+function carry(){
+ const now=new Date(),today=dateKey(now),clock=pad(now.getHours())+':'+pad(now.getMinutes());
+ const cutoffPassed=clock>=carryTime;
+ let changed=false;
+ for(const t of state.tasks){
+   if(t.done||t.pinnedPast||!t.day||t.day>=today)continue;
+   // A task is due to move only when the next workday's cutoff has passed.
+   let guard=0;
+   while(t.day<today&&guard++<4000){
+     const target=nextWork(t.day);
+     if(target>today||target===today&&!cutoffPassed)break;
+     snapshot(t,t.day);t.day=target;changed=true;
+   }
+ }
+ if(changed)save();
+}
+function testCarry(){
+ const today=dateKey(new Date()),tasks=state.tasks.filter(t=>!t.done&&!t.pinnedPast&&t.day===today);
+ if(!tasks.length){alert('Ingen uferdige oppgaver på dagens dato å teste med.');return}
+ const target=nextWork(today);
+ if(!confirm(`Test: Flytte ${tasks.length} uferdige oppgave(r) fra i dag til neste arbeidsdag (${target})? De blir stående grået ut med ☒ på dagens dato.`))return;
+ for(const t of tasks){snapshot(t,t.day);t.day=target}
+ save();render();alert('Testen er gjennomført. Gå til neste arbeidsdag for å se de aktive oppgavene.');
+}
+document.getElementById('test-carry').addEventListener('click',testCarry);
 let shown=monday(new Date());const grid=document.getElementById('grid');
 function weekNo(d){let a=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));a.setUTCDate(a.getUTCDate()+4-(a.getUTCDay()||7));let y=a.getUTCFullYear();return {n:Math.ceil((((a-new Date(Date.UTC(y,0,1)))/86400000)+1)/7),y}}
 function cleanHTML(html){let box=document.createElement('div');box.innerHTML=html;box.querySelectorAll('script,style,iframe,object,embed,svg,form,input,button').forEach(el=>el.remove());for(const el of [...box.querySelectorAll('*')]){for(const attr of [...el.attributes])if(attr.name!=='style'&&attr.name!=='class')el.removeAttribute(attr.name);if(el.hasAttribute('style')){const margin=el.style.marginLeft;el.removeAttribute('style');if(margin&&/^\d+(px|em)$/.test(margin))el.style.marginLeft=margin}}return box.innerHTML}
@@ -154,13 +195,13 @@ function moveTask(taskId,targetDay,beforeId=null){
  if(insertAt<0)state.tasks.push(task);else state.tasks.splice(insertAt,0,task);
  save();render();
 }
-function taskRow(t,historical,displayDay){
- let li=document.createElement('li');li.className='task'+(t.done?' done':'');
- let box=document.createElement('input');box.type='checkbox';box.checked=!!t.done;box.disabled=false;box.setAttribute('aria-label','Marker hele oppgaven som utført');
- box.addEventListener('change',()=>{t.done=box.checked;t.completedAt=t.done?(historical?t.history[t.history.length-1]:t.day):null;save();render()});
- let span=document.createElement('div');span.className='text';span.innerHTML=cleanHTML(t.html||'');
- if(!t.html&&t.text)span.textContent=t.text;
- if(true){span.contentEditable='true';span.setAttribute('role','textbox');span.setAttribute('aria-multiline','true');span.setAttribute('aria-label','Rediger oppgave og delpunkter');
+function taskRow(t,historical,displayDay,historicalSnapshot=null){
+ let li=document.createElement('li');li.className='task'+(historical?' carried':t.done?' done':'');
+ let box=historical?document.createElement('span'):document.createElement('input');if(historical){box.className='carried-mark';box.textContent='☒';box.setAttribute('aria-label','Videreført')}else{box.type='checkbox';box.checked=!!t.done;box.setAttribute('aria-label','Marker hele oppgaven som utført');}
+ if(!historical)box.addEventListener('change',()=>{t.done=box.checked;t.completedAt=t.done?t.day:null;save();render()});
+ let span=document.createElement('div');span.className='text';span.innerHTML=cleanHTML(historical?(historicalSnapshot?.html||t.html||''):(t.html||''));
+ if(!span.innerHTML&&(historical?(historicalSnapshot?.text||t.text):t.text))span.textContent=historical?(historicalSnapshot?.text||t.text):t.text;
+ if(!historical){span.contentEditable='true';span.setAttribute('role','textbox');span.setAttribute('aria-multiline','true');span.setAttribute('aria-label','Rediger oppgave og delpunkter');
  span.addEventListener('input',()=>{t.html=cleanHTML(span.innerHTML);t.text=span.textContent;save()});
  span.addEventListener('blur',()=>{t.html=cleanHTML(span.innerHTML);t.text=span.textContent;save()});
  span.addEventListener('paste',e=>{e.preventDefault();insertText(e.clipboardData.getData('text/plain'))});
@@ -180,10 +221,10 @@ function taskRow(t,historical,displayDay){
  if(!historical){let del=document.createElement('button');del.className='del';del.textContent='×';del.title='Slett oppgave';del.setAttribute('aria-label','Slett oppgave');del.addEventListener('click',()=>{if(confirm('Slette oppgaven?')){state.tasks=state.tasks.filter(x=>x.id!==t.id);save();render()}});li.append(del)}
  return li
 }
-function render(){carry();const w=weekNo(shown);document.getElementById('week').innerHTML=`Uke ${w.n}<span class="week-year">${w.y}</span>`;grid.replaceChildren();let today=dateKey(new Date());for(let i=0;i<5;i++){let d=addDays(shown,i),key=dateKey(d);let card=document.createElement('section');card.className='day'+(key===today?' today':'');let head=document.createElement('div');head.className='day-head';let title=document.createElement('div');title.className='day-title';title.textContent=names[i];let date=document.createElement('div');date.className='date';date.textContent=d.toLocaleDateString('nb-NO',{day:'numeric',month:'long'});let actual=state.tasks.filter(t=>t.day===key);let historical=state.tasks.filter(t=>t.day!==key&&Array.isArray(t.history)&&t.history.includes(key));let active=actual.filter(t=>!t.done);let done=actual.filter(t=>t.done);head.append(title,date);let list=document.createElement('ul');list.className='tasks';
+function render(){carry();const w=weekNo(shown);document.getElementById('week').innerHTML=`Uke ${w.n}<span class="week-year">${w.y}</span>`;grid.replaceChildren();let today=dateKey(new Date());for(let i=0;i<5;i++){let d=addDays(shown,i),key=dateKey(d);let card=document.createElement('section');card.className='day'+(key===today?' today':'');let head=document.createElement('div');head.className='day-head';let title=document.createElement('div');title.className='day-title';title.textContent=names[i];let date=document.createElement('div');date.className='date';date.textContent=d.toLocaleDateString('nb-NO',{day:'numeric',month:'long'});let actual=state.tasks.filter(t=>t.day===key);let historical=state.tasks.filter(t=>t.day!==key&&Array.isArray(t.history)&&t.history.some(h=>(typeof h==='string'?h:h.day)===key));let active=actual.filter(t=>!t.done);let done=actual.filter(t=>t.done);head.append(title,date);let list=document.createElement('ul');list.className='tasks';
  list.addEventListener('dragover',e=>{if(!draggedTaskId)return;e.preventDefault();e.dataTransfer.dropEffect='move';list.classList.add('drag-over')});
  list.addEventListener('dragleave',e=>{if(!list.contains(e.relatedTarget))list.classList.remove('drag-over')});
- list.addEventListener('drop',e=>{if(!draggedTaskId)return;e.preventDefault();moveTask(draggedTaskId,key);draggedTaskId=null});for(const t of [...active,...done])list.append(taskRow(t,false,key));for(const t of historical){let row=taskRow(t,true,key);row.style.opacity='.7';row.title='Videreført til en senere dag – kan redigeres og markeres ferdig';list.append(row)}let form=document.createElement('form');form.className='add empty-first';let input=document.createElement('textarea');input.placeholder='';input.setAttribute('aria-label',`Ny oppgave med delpunkter ${names[i]}`);let btn=document.createElement('button');btn.type='submit';btn.textContent='+';btn.setAttribute('aria-label','Legg til hele oppgaven');form.append(input,btn);form.addEventListener('click',e=>{if(e.target===form)input.focus()});input.addEventListener('input',()=>{input.style.height='34px';input.style.height=Math.max(34,input.scrollHeight)+'px'});
+ list.addEventListener('drop',e=>{if(!draggedTaskId)return;e.preventDefault();moveTask(draggedTaskId,key);draggedTaskId=null});for(const t of [...active,...done])list.append(taskRow(t,false,key));for(const t of historical){let snap=t.history.find(h=>(typeof h==='string'?h:h.day)===key);let row=taskRow(t,true,key,typeof snap==='string'?null:snap);row.title='Historikk: oppgaven ble videreført til en senere dag';list.append(row)}let form=document.createElement('form');form.className='add empty-first';let input=document.createElement('textarea');input.placeholder='';input.setAttribute('aria-label',`Ny oppgave med delpunkter ${names[i]}`);let btn=document.createElement('button');btn.type='submit';btn.textContent='+';btn.setAttribute('aria-label','Legg til hele oppgaven');form.append(input,btn);form.addEventListener('click',e=>{if(e.target===form)input.focus()});input.addEventListener('input',()=>{input.style.height='34px';input.style.height=Math.max(34,input.scrollHeight)+'px'});
  input.addEventListener('keydown',e=>{if(e.key==='Tab'){e.preventDefault();const a=input.selectionStart,b=input.selectionEnd;const v=input.value;if(e.shiftKey){let start=v.lastIndexOf('\n',a-1)+1;let remove=v.slice(start).match(/^( {1,4}|\t)/)?.[0]||'';if(remove){input.value=v.slice(0,start)+v.slice(start+remove.length);input.selectionStart=Math.max(start,a-remove.length);input.selectionEnd=Math.max(start,b-remove.length)}}else{input.setRangeText('    ',a,b,'end')}}else if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();form.requestSubmit()}else if(e.key==='Enter'&&e.shiftKey){e.preventDefault();input.setRangeText('\n',input.selectionStart,input.selectionEnd,'end')}});
  input.addEventListener('blur',()=>{if(input.value.trim())form.requestSubmit()});form.addEventListener('submit',e=>{e.preventDefault();let value=input.value.trim();if(!value)return;const lines=value.replace(/\r/g,'').split('\n');const html=lines.map(line=>{const indentation=(line.match(/^[ \t]*/)||[''])[0].replace(/\t/g,'    ').length;const content=line.trim();const el=document.createElement('div');el.style.marginLeft=(Math.min(12,Math.floor(indentation/4))*20)+'px';el.textContent=content||' ';return el.outerHTML}).join('');const newId=crypto.randomUUID?crypto.randomUUID():String(Date.now()+Math.random());state.tasks.push({id:newId,text:value,html,day:key,done:false,history:[],pinnedPast:key<dateKey(new Date())});save();render();const rows=[...(grid.children[i]?.querySelectorAll('.task:not(.done) .text')||[])];const created=rows.find(el=>el.closest('.task')?.dataset.taskId===newId);if(created)created.focus()});card.append(head);card.append(list);if(actual.length===0)card.insertBefore(form,list);grid.append(card)}}
 document.getElementById('export').addEventListener('click',()=>{const blob=new Blob([JSON.stringify({format:'ukeplanlegger-backup',version:1,exportedAt:new Date().toISOString(),data:state},null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='ukeplanlegger-sikkerhetskopi-'+dateKey(new Date())+'.json';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1500)});
