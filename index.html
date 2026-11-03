@@ -96,6 +96,12 @@ html[data-theme="dark"] .task.carried .text,html[data-theme="dark"] .task.carrie
 .day.future .task:not(.done):not(.carried) .text{opacity:var(--task-opacity-future)}
 .day.past .task:not(.done):not(.carried) .text{opacity:var(--task-opacity-past)}
 .day .task:not(.done):not(.carried) .text:focus{opacity:1}
+/* La dagoverskriften følge samme styrke som oppgaveteksten. */
+.day.today .day-title{opacity:var(--task-opacity-today)}
+.day.future .day-title{opacity:var(--task-opacity-future)}
+.day.past .day-title{opacity:var(--task-opacity-past)}
+/* Tidligere oppgaver kan være fullført eller videreført. Disse må også reagere på glidebryteren. */
+.day.past .task.done .text,.day.past .task.carried .text{opacity:var(--task-opacity-past)}
 .contrast-settings{padding:10px 11px;color:#7d838b;font-size:12px}
 .contrast-settings-title{font-weight:600;margin-bottom:10px}
 .contrast-setting{display:grid;grid-template-columns:1fr auto;gap:3px 8px;margin:9px 0}
