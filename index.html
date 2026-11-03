@@ -90,6 +90,12 @@ html[data-theme="dark"] .carry-setting{color:#b6b6b6}
 html[data-theme="dark"] .carry-setting input{border-color:#666;color:#e5e5e5;color-scheme:dark}
 .task.carried{opacity:.48}.task.carried .text,.task.carried .text *{color:#90949b!important;text-decoration:none!important}.task .carried-mark{width:14px;flex:0 0 14px;margin-top:1px;font-size:16px;line-height:19px;color:#8c9096;text-align:center}
 html[data-theme="dark"] .task.carried .text,html[data-theme="dark"] .task.carried .text *{color:#a3a3a3!important}
+/* Kun oppgaveteksten på andre dager enn i dag dempes.
+   Dagskolonner, kontroller og avkrysningsbokser er uendret. */
+.day:not(.today) .task:not(.done):not(.carried) .text{opacity:.70}
+.day:not(.today) .task:not(.done):not(.carried) .text:focus{opacity:1}
+html[data-theme="dark"] .day:not(.today) .task:not(.done):not(.carried) .text{opacity:.68}
+html[data-theme="dark"] .day:not(.today) .task:not(.done):not(.carried) .text:focus{opacity:1}
 </style>
 </head>
 <body><div class="wrap"><header><div class="nav"><button id="prev" aria-label="Forrige uke">←</button><span class="week-label" id="week"></span><button id="next" aria-label="Neste uke">→</button><div class="menu-wrap"><button class="sync-toggle" id="sync-now" type="button" aria-label="Synkroniser" title="Synkroniser">⟳</button><button class="action menu-toggle" id="menu-toggle" type="button" aria-label="Åpne meny" aria-haspopup="true" aria-expanded="false" aria-controls="app-menu">☰</button><div class="app-menu" id="app-menu" hidden><button id="current" type="button">Denne uken</button><button id="theme-toggle" type="button" aria-label="Bytt mellom lyst og mørkt tema" aria-pressed="false">Mørkt tema</button><div class="menu-separator"></div><label class="carry-setting" for="carry-time">Overføring av uferdige oppgaver <input id="carry-time" type="time" value="00:00"></label><button id="test-carry" type="button">Test overføring nå</button><div class="menu-separator"></div><button id="connect-backup" type="button">Velg sikkerhetskopifil</button><button id="export" type="button">Eksporter</button><button id="import" type="button">Importer</button></div></div><input type="file" id="import-file" accept=".json,application/json" hidden></div></header><div id="backup-status" role="status" aria-live="polite" style="font-size:11px;color:#777777;margin:0 0 12px">Lagret OK</div><main class="grid" id="grid"></main></div>
