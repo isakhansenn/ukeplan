@@ -126,6 +126,10 @@ header{min-height:34px;margin-bottom:0}
 #backup-status{margin-bottom:2px!important;min-height:12px;line-height:12px}
 #prev,#next{padding-top:3px;padding-bottom:3px}
 @media(max-width:560px){body{padding-top:3px}header{min-height:34px}}
+
+/* Deloppgaver med egen avkrysning */
+.task-content{flex:1;min-width:0}.task-content>.text{min-height:20px}
+.subtasks{margin:8px 0 0 0;padding:0;list-style:none}.subtask{display:flex;align-items:flex-start;gap:8px;padding:4px 0 4px 8px;min-width:0}.subtask input[type=checkbox]{flex-shrink:0;margin-top:4px}.subtask-label{flex:1;min-width:0;overflow-wrap:anywhere;white-space:pre-wrap;outline-offset:2px}.subtask.done .subtask-label{text-decoration:line-through;opacity:.55}.subtask-delete,.subtask-add{border:0;background:transparent;color:inherit;opacity:.55;cursor:pointer}.subtask-delete{font-size:16px;padding:0 5px}.subtask-add{font-size:12px;margin:5px 0 0 8px;padding:4px 0}.subtask-add:hover,.subtask-delete:hover{opacity:1}.subtask-label:focus{opacity:1!important}.task.carried .subtask-add{display:none}
 </style>
 </head>
 <body><div class="wrap"><header><div class="nav"><button id="prev" aria-label="Forrige uke">←</button><span class="week-label" id="week"></span><button id="next" aria-label="Neste uke">→</button><div class="menu-wrap"><button class="sync-toggle" id="sync-now" type="button" aria-label="Synkroniser" title="Synkroniser">⟳</button><button class="action menu-toggle" id="menu-toggle" type="button" aria-label="Åpne meny" aria-haspopup="true" aria-expanded="false" aria-controls="app-menu">☰</button><div class="app-menu" id="app-menu" hidden><button id="current" type="button">Denne uken</button><button id="theme-toggle" type="button" aria-label="Bytt mellom lyst og mørkt tema" aria-pressed="false">Mørkt tema</button><div class="menu-separator"></div><div class="contrast-settings" role="group" aria-label="Juster oppgavetekst"><div class="contrast-settings-title">Oppgavetekst – synlighet</div><div class="contrast-setting"><label for="contrast-today">I dag</label><output id="contrast-today-value" for="contrast-today">100 %</output><input id="contrast-today" type="range" min="20" max="100" step="5" value="100"></div><div class="contrast-setting"><label for="contrast-future">Fremtidige dager</label><output id="contrast-future-value" for="contrast-future">50 %</output><input id="contrast-future" type="range" min="20" max="100" step="5" value="50"></div><div class="contrast-setting"><label for="contrast-past">Tidligere dager</label><output id="contrast-past-value" for="contrast-past">50 %</output><input id="contrast-past" type="range" min="20" max="100" step="5" value="50"></div></div><div class="menu-separator"></div><label class="carry-setting" for="carry-time">Overføring av uferdige oppgaver <input id="carry-time" type="time" value="00:00"></label><button id="test-carry" type="button">Test overføring nå</button><div class="menu-separator"></div><button id="connect-backup" type="button">Velg sikkerhetskopifil</button><button id="export" type="button">Eksporter</button><button id="import" type="button">Importer</button></div></div><input type="file" id="import-file" accept=".json,application/json" hidden></div></header><div id="backup-status" role="status" aria-live="polite" style="font-size:11px;color:#777777;margin:0 0 12px">Lagret OK</div><main class="grid" id="grid"></main></div>
@@ -283,7 +287,60 @@ function moveTask(taskId,targetDay,beforeId=null){
  if(insertAt<0)state.tasks.push(task);else state.tasks.splice(insertAt,0,task);
  save();render();
 }
+function ensureSubtasks(t){
+ if(Array.isArray(t.subtasks))return;
+ t.subtasks=[];
+ // Oppgrader eldre oppgaver der innrykkede linjer var vanlig tekst.
+ const box=document.createElement('div');box.innerHTML=cleanHTML(t.html||'');
+ const rows=[...box.children];
+ if(rows.length<2)return;
+ const kept=[];let found=false;
+ for(const row of rows){
+   const margin=parseFloat(row.style.marginLeft||'0');
+   const value=(row.textContent||'').trim();
+   if(margin>0&&value){t.subtasks.push({id:crypto.randomUUID?crypto.randomUUID():String(Date.now()+Math.random()),text:value.replace(/^[-•]\s*/,''),done:false});found=true}
+   else kept.push(row.outerHTML);
+ }
+ if(found){t.html=kept.join('');t.text=box.textContent;save()}
+}
+function makeSubtasks(t,historical){
+ const ul=document.createElement('ul');ul.className='subtasks';
+ for(const item of (t.subtasks||[])){
+   const li=document.createElement('li');li.className='subtask'+(item.done?' done':'');
+   const cb=document.createElement('input');cb.type='checkbox';cb.checked=!!item.done;cb.disabled=historical;cb.setAttribute('aria-label','Fullfør deloppgave: '+item.text);
+   if(!historical)cb.addEventListener('change',()=>{item.done=cb.checked;li.classList.toggle('done',item.done);save()});
+   const label=document.createElement('span');label.className='subtask-label';label.textContent=item.text;
+   if(!historical){label.contentEditable='true';label.setAttribute('role','textbox');label.setAttribute('aria-label','Rediger deloppgave');label.addEventListener('input',()=>{item.text=label.textContent;save()});label.addEventListener('keydown',e=>{
+     if(e.key!=='Enter')return;
+     e.preventDefault();
+     if(!e.shiftKey){label.blur();return}
+     // Shift+Enter lager neste deloppgave. Shift+Enter igjen på en tom
+     // deloppgave avslutter deloppgavemodus og flytter fokus til hovedoppgaven.
+     const currentText=label.textContent.trim();
+     item.text=label.textContent;save();
+     if(!currentText){
+       t.subtasks=t.subtasks.filter(x=>x!==item);
+       save();render();
+       const main=grid.querySelector(`[data-task-id="${t.id}"] .text`);
+       if(main){main.focus();const selection=window.getSelection();const range=document.createRange();range.selectNodeContents(main);range.collapse(false);selection.removeAllRanges();selection.addRange(range)}
+       return;
+     }
+     const next={id:crypto.randomUUID?crypto.randomUUID():String(Date.now()+Math.random()),text:'',done:false};
+     const index=t.subtasks.findIndex(x=>x.id===item.id);
+     t.subtasks.splice(index+1,0,next);save();render();
+     const row=grid.querySelector(`[data-task-id="${t.id}"]`);
+     const labels=[...(row?.querySelectorAll('.subtask-label')||[])];
+     const nextIndex=t.subtasks.findIndex(x=>x.id===next.id);
+     labels[nextIndex]?.focus();
+   })}
+   li.append(cb,label);
+   if(!historical){const del=document.createElement('button');del.type='button';del.className='subtask-delete';del.textContent='×';del.title='Slett deloppgave';del.setAttribute('aria-label','Slett deloppgave');del.addEventListener('click',()=>{t.subtasks=t.subtasks.filter(x=>x!==item);save();render()});li.append(del)}
+   ul.append(li);
+ }
+ return ul;
+}
 function taskRow(t,historical,displayDay,historicalSnapshot=null){
+ if(!historical)ensureSubtasks(t);
  let li=document.createElement('li');li.className='task'+(historical?' carried':t.done?' done':'');
  let box=historical?document.createElement('span'):document.createElement('input');if(historical){box.className='carried-mark';box.textContent='☒';box.setAttribute('aria-label','Videreført')}else{box.type='checkbox';box.checked=!!t.done;box.setAttribute('aria-label','Marker hele oppgaven som utført');}
  if(!historical)box.addEventListener('change',()=>{t.done=box.checked;t.completedAt=t.done?t.day:null;save();render()});
@@ -305,7 +362,11 @@ function taskRow(t,historical,displayDay,historicalSnapshot=null){
    li.addEventListener('dragleave',()=>li.classList.remove('drag-over'));
    li.addEventListener('drop',e=>{if(!draggedTaskId)return;e.preventDefault();e.stopPropagation();moveTask(draggedTaskId,displayDay,t.id);draggedTaskId=null});
  }
- li.append(box,span);
+ const content=document.createElement('div');content.className='task-content';content.append(span);
+ const subs=makeSubtasks(t,historical);
+ if(subs.children.length)content.append(subs);
+ if(!historical){const addSub=document.createElement('button');addSub.type='button';addSub.className='subtask-add';addSub.textContent='+ Deloppgave';addSub.setAttribute('aria-label','Legg til deloppgave');addSub.addEventListener('click',()=>{const item={id:crypto.randomUUID?crypto.randomUUID():String(Date.now()+Math.random()),text:'',done:false};t.subtasks.push(item);save();render();const row=grid.querySelector(`[data-task-id="${t.id}"]`);const labels=row?.querySelectorAll('.subtask-label');labels?.[labels.length-1]?.focus()});content.append(addSub)}
+ li.append(box,content);
  if(!historical){let del=document.createElement('button');del.className='del';del.textContent='×';del.title='Slett oppgave';del.setAttribute('aria-label','Slett oppgave');del.addEventListener('click',()=>{if(confirm('Slette oppgaven?')){state.tasks=state.tasks.filter(x=>x.id!==t.id);save();render()}});li.append(del)}
  return li
 }
