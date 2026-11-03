@@ -148,9 +148,24 @@ header{min-height:34px;margin-bottom:0}
 .subtask input[type="checkbox"]:disabled{cursor:default;opacity:.45}
 html[data-theme="dark"] .subtask input[type="checkbox"]{border-color:#858585}
 html[data-theme="dark"] .subtask input[type="checkbox"]:checked{background:#989898;border-color:#989898}
+/* Hovedoppgaver og deloppgaver deler tekstfarge og dagsbasert synlighet.
+   Skriftstørrelsen kan justeres uavhengig. Avkrysningsboksene påvirkes ikke. */
+:root{--task-font-main:14px;--task-font-sub:14px}
+.task .task-content>.text{font-size:var(--task-font-main);color:inherit}
+.task .subtask-label{font-family:inherit;font-size:var(--task-font-sub);font-weight:inherit;line-height:1.45;color:inherit}
+.day.today .task:not(.done):not(.carried) .subtask-label{opacity:var(--task-opacity-today)}
+.day.future .task:not(.done):not(.carried) .subtask-label{opacity:var(--task-opacity-future)}
+.day.past .task:not(.done):not(.carried) .subtask-label{opacity:var(--task-opacity-past)}
+.day.past .task.done .subtask-label,.day.past .task.carried .subtask-label{opacity:var(--task-opacity-past)}
+.task .subtask-label:focus{opacity:1!important}
+/* Fullførte deloppgaver beholder gjennomstreking uten ekstra nedtoning. */
+.subtask.done .subtask-label{text-decoration:line-through}
+.day.today .task:not(.done):not(.carried) .subtask.done .subtask-label{opacity:var(--task-opacity-today)}
+.day.future .task:not(.done):not(.carried) .subtask.done .subtask-label{opacity:var(--task-opacity-future)}
+.day.past .task:not(.done):not(.carried) .subtask.done .subtask-label{opacity:var(--task-opacity-past)}
 </style>
 </head>
-<body><div class="wrap"><header><div class="nav"><button id="prev" aria-label="Forrige uke">←</button><span class="week-label" id="week"></span><button id="next" aria-label="Neste uke">→</button><div class="menu-wrap"><button class="sync-toggle" id="sync-now" type="button" aria-label="Synkroniser" title="Synkroniser">⟳</button><button class="action menu-toggle" id="menu-toggle" type="button" aria-label="Åpne meny" aria-haspopup="true" aria-expanded="false" aria-controls="app-menu">☰</button><div class="app-menu" id="app-menu" hidden><button id="current" type="button">Denne uken</button><button id="theme-toggle" type="button" aria-label="Bytt mellom lyst og mørkt tema" aria-pressed="false">Mørkt tema</button><div class="menu-separator"></div><div class="contrast-settings" role="group" aria-label="Juster oppgavetekst"><div class="contrast-settings-title">Oppgavetekst – synlighet</div><div class="contrast-setting"><label for="contrast-today">I dag</label><output id="contrast-today-value" for="contrast-today">100 %</output><input id="contrast-today" type="range" min="20" max="100" step="5" value="100"></div><div class="contrast-setting"><label for="contrast-future">Fremtidige dager</label><output id="contrast-future-value" for="contrast-future">50 %</output><input id="contrast-future" type="range" min="20" max="100" step="5" value="50"></div><div class="contrast-setting"><label for="contrast-past">Tidligere dager</label><output id="contrast-past-value" for="contrast-past">50 %</output><input id="contrast-past" type="range" min="20" max="100" step="5" value="50"></div></div><div class="menu-separator"></div><label class="carry-setting" for="carry-time">Overføring av uferdige oppgaver <input id="carry-time" type="time" value="00:00"></label><button id="test-carry" type="button">Test overføring nå</button><div class="menu-separator"></div><button id="connect-backup" type="button">Velg sikkerhetskopifil</button><button id="export" type="button">Eksporter</button><button id="import" type="button">Importer</button></div></div><input type="file" id="import-file" accept=".json,application/json" hidden></div></header><div id="backup-status" role="status" aria-live="polite" style="font-size:11px;color:#777777;margin:0 0 12px">Lagret OK</div><main class="grid" id="grid"></main></div>
+<body><div class="wrap"><header><div class="nav"><button id="prev" aria-label="Forrige uke">←</button><span class="week-label" id="week"></span><button id="next" aria-label="Neste uke">→</button><div class="menu-wrap"><button class="sync-toggle" id="sync-now" type="button" aria-label="Synkroniser" title="Synkroniser">⟳</button><button class="action menu-toggle" id="menu-toggle" type="button" aria-label="Åpne meny" aria-haspopup="true" aria-expanded="false" aria-controls="app-menu">☰</button><div class="app-menu" id="app-menu" hidden><button id="current" type="button">Denne uken</button><button id="theme-toggle" type="button" aria-label="Bytt mellom lyst og mørkt tema" aria-pressed="false">Mørkt tema</button><div class="menu-separator"></div><div class="contrast-settings" role="group" aria-label="Juster oppgavetekst"><div class="contrast-settings-title">Oppgavetekst – synlighet</div><div class="contrast-setting"><label for="contrast-today">I dag</label><output id="contrast-today-value" for="contrast-today">100 %</output><input id="contrast-today" type="range" min="20" max="100" step="5" value="100"></div><div class="contrast-setting"><label for="contrast-future">Fremtidige dager</label><output id="contrast-future-value" for="contrast-future">50 %</output><input id="contrast-future" type="range" min="20" max="100" step="5" value="50"></div><div class="contrast-setting"><label for="contrast-past">Tidligere dager</label><output id="contrast-past-value" for="contrast-past">50 %</output><input id="contrast-past" type="range" min="20" max="100" step="5" value="50"></div></div><div class="menu-separator"></div><div class="contrast-settings" role="group" aria-label="Skriftstørrelse"><div class="contrast-settings-title">Skriftstørrelse</div><div class="contrast-setting"><label for="font-main">Hovedoppgaver</label><output id="font-main-value" for="font-main">14 px</output><input id="font-main" type="range" min="10" max="24" step="1" value="14"></div><div class="contrast-setting"><label for="font-sub">Deloppgaver</label><output id="font-sub-value" for="font-sub">14 px</output><input id="font-sub" type="range" min="10" max="24" step="1" value="14"></div></div><div class="menu-separator"></div><label class="carry-setting" for="carry-time">Overføring av uferdige oppgaver <input id="carry-time" type="time" value="00:00"></label><button id="test-carry" type="button">Test overføring nå</button><div class="menu-separator"></div><button id="connect-backup" type="button">Velg sikkerhetskopifil</button><button id="export" type="button">Eksporter</button><button id="import" type="button">Importer</button></div></div><input type="file" id="import-file" accept=".json,application/json" hidden></div></header><div id="backup-status" role="status" aria-live="polite" style="font-size:11px;color:#777777;margin:0 0 12px">Lagret OK</div><main class="grid" id="grid"></main></div>
 <script>
 (()=>{'use strict';
 
@@ -170,6 +185,16 @@ for(const key of Object.keys(contrastDefaults)){
  const update=()=>{const value=contrastPrefs[key];slider.value=value;output.textContent=value+' %';document.documentElement.style.setProperty('--task-opacity-'+key,String(value/100))};
  update();
  slider.addEventListener('input',()=>{contrastPrefs[key]=Number(slider.value);update();try{localStorage.setItem(CONTRAST_KEY,JSON.stringify(contrastPrefs))}catch{}});
+}
+const FONT_SIZE_KEY='ukeplan-task-font-sizes';
+const fontDefaults={main:14,sub:14};
+let fontPrefs={...fontDefaults};
+try{const stored=JSON.parse(localStorage.getItem(FONT_SIZE_KEY));if(stored&&typeof stored==='object'){for(const key of Object.keys(fontDefaults)){const v=Number(stored[key]);if(Number.isInteger(v)&&v>=10&&v<=24)fontPrefs[key]=v}}}catch{}
+for(const key of Object.keys(fontDefaults)){
+ const slider=document.getElementById('font-'+key),output=document.getElementById('font-'+key+'-value');
+ const update=()=>{slider.value=fontPrefs[key];output.textContent=fontPrefs[key]+' px';document.documentElement.style.setProperty('--task-font-'+key,fontPrefs[key]+'px')};
+ update();
+ slider.addEventListener('input',()=>{fontPrefs[key]=Number(slider.value);update();try{localStorage.setItem(FONT_SIZE_KEY,JSON.stringify(fontPrefs))}catch{}});
 }
 const themeKey='ukeplan-theme';
 const themeButton=document.getElementById('theme-toggle');
