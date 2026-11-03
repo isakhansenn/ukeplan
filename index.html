@@ -129,7 +129,25 @@ header{min-height:34px;margin-bottom:0}
 
 /* Deloppgaver med egen avkrysning */
 .task-content{flex:1;min-width:0}.task-content>.text{min-height:20px}
-.subtasks{margin:8px 0 0 0;padding:0;list-style:none}.subtask{display:flex;align-items:flex-start;gap:8px;padding:4px 0 4px 8px;min-width:0}.subtask input[type=checkbox]{flex-shrink:0;margin-top:4px}.subtask-label{flex:1;min-width:0;overflow-wrap:anywhere;white-space:pre-wrap;outline-offset:2px}.subtask.done .subtask-label{text-decoration:line-through;opacity:.55}.subtask-delete,.subtask-add{border:0;background:transparent;color:inherit;opacity:.55;cursor:pointer}.subtask-delete{font-size:16px;padding:0 5px}.subtask-add{font-size:12px;margin:5px 0 0 8px;padding:4px 0}.subtask-add:hover,.subtask-delete:hover{opacity:1}.subtask-label:focus{opacity:1!important}.task.carried .subtask-add{display:none}
+.subtasks{margin:8px 0 0 0;padding:0;list-style:none}.subtask{display:flex;align-items:flex-start;gap:8px;padding:4px 0 4px 8px;min-width:0}.subtask input[type=checkbox]{flex-shrink:0;margin-top:4px}.subtask-label{flex:1;min-width:0;overflow-wrap:anywhere;white-space:pre-wrap;outline-offset:2px}.subtask.done .subtask-label{text-decoration:line-through;opacity:.55}.subtask-delete{border:0;background:transparent;color:inherit;opacity:.55;cursor:pointer}.subtask-delete{font-size:16px;padding:0 5px}.subtask-add{font-size:12px;margin:5px 0 0 8px;padding:4px 0}.subtask-delete:hover{opacity:1}.subtask-label:focus{opacity:1!important}
+
+/* Deloppgaver har en mindre, mer diskret avkrysningsboks enn hovedoppgaver. */
+.subtask input[type="checkbox"]{
+  appearance:none;-webkit-appearance:none;
+  width:12px;height:12px;min-width:12px;
+  margin:5px 0 0;border:1px solid #a9adb3;border-radius:3px;
+  background:transparent;position:relative;opacity:.72;
+  cursor:pointer;flex-shrink:0;
+}
+.subtask input[type="checkbox"]:checked{background:#92979d;border-color:#92979d;opacity:.8}
+.subtask input[type="checkbox"]:checked::after{
+  content:"";position:absolute;left:3px;top:0px;width:3px;height:6px;
+  border:solid #fff;border-width:0 1.5px 1.5px 0;transform:rotate(45deg)
+}
+.subtask input[type="checkbox"]:focus-visible{outline:2px solid #7c8998;outline-offset:3px}
+.subtask input[type="checkbox"]:disabled{cursor:default;opacity:.45}
+html[data-theme="dark"] .subtask input[type="checkbox"]{border-color:#858585}
+html[data-theme="dark"] .subtask input[type="checkbox"]:checked{background:#989898;border-color:#989898}
 </style>
 </head>
 <body><div class="wrap"><header><div class="nav"><button id="prev" aria-label="Forrige uke">←</button><span class="week-label" id="week"></span><button id="next" aria-label="Neste uke">→</button><div class="menu-wrap"><button class="sync-toggle" id="sync-now" type="button" aria-label="Synkroniser" title="Synkroniser">⟳</button><button class="action menu-toggle" id="menu-toggle" type="button" aria-label="Åpne meny" aria-haspopup="true" aria-expanded="false" aria-controls="app-menu">☰</button><div class="app-menu" id="app-menu" hidden><button id="current" type="button">Denne uken</button><button id="theme-toggle" type="button" aria-label="Bytt mellom lyst og mørkt tema" aria-pressed="false">Mørkt tema</button><div class="menu-separator"></div><div class="contrast-settings" role="group" aria-label="Juster oppgavetekst"><div class="contrast-settings-title">Oppgavetekst – synlighet</div><div class="contrast-setting"><label for="contrast-today">I dag</label><output id="contrast-today-value" for="contrast-today">100 %</output><input id="contrast-today" type="range" min="20" max="100" step="5" value="100"></div><div class="contrast-setting"><label for="contrast-future">Fremtidige dager</label><output id="contrast-future-value" for="contrast-future">50 %</output><input id="contrast-future" type="range" min="20" max="100" step="5" value="50"></div><div class="contrast-setting"><label for="contrast-past">Tidligere dager</label><output id="contrast-past-value" for="contrast-past">50 %</output><input id="contrast-past" type="range" min="20" max="100" step="5" value="50"></div></div><div class="menu-separator"></div><label class="carry-setting" for="carry-time">Overføring av uferdige oppgaver <input id="carry-time" type="time" value="00:00"></label><button id="test-carry" type="button">Test overføring nå</button><div class="menu-separator"></div><button id="connect-backup" type="button">Velg sikkerhetskopifil</button><button id="export" type="button">Eksporter</button><button id="import" type="button">Importer</button></div></div><input type="file" id="import-file" accept=".json,application/json" hidden></div></header><div id="backup-status" role="status" aria-live="polite" style="font-size:11px;color:#777777;margin:0 0 12px">Lagret OK</div><main class="grid" id="grid"></main></div>
@@ -350,7 +368,17 @@ function taskRow(t,historical,displayDay,historicalSnapshot=null){
  span.addEventListener('input',()=>{t.html=cleanHTML(span.innerHTML);t.text=span.textContent;save()});
  span.addEventListener('blur',()=>{t.html=cleanHTML(span.innerHTML);t.text=span.textContent;save()});
  span.addEventListener('paste',e=>{e.preventDefault();insertText(e.clipboardData.getData('text/plain'))});
- span.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();t.html=cleanHTML(span.innerHTML);t.text=span.textContent;const newTask={id:crypto.randomUUID?crypto.randomUUID():String(Date.now()+Math.random()),text:'',html:'',day:displayDay,done:false,history:[],pinnedPast:displayDay<dateKey(new Date())};const at=state.tasks.findIndex(x=>x.id===t.id);state.tasks.splice(at+1,0,newTask);save();render();const target=grid.querySelector(`[data-task-id="${newTask.id}"] .text`);if(target){target.focus();const selection=window.getSelection();const range=document.createRange();range.selectNodeContents(target);range.collapse(false);selection.removeAllRanges();selection.addRange(range)}return}if(e.key==='Tab'){e.preventDefault();if(e.shiftKey){const sel=window.getSelection();let node=sel.anchorNode;let parent=node?.nodeType===1?node:node?.parentElement;const block=parent?.closest('div,p,li');if(block&&span.contains(block)){const n=parseInt(block.style.marginLeft||'0',10);block.style.marginLeft=Math.max(0,n-20)+'px';t.html=cleanHTML(span.innerHTML);save()}}else{insertText('    ')} } });
+ span.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.shiftKey){
+   e.preventDefault();
+   t.html=cleanHTML(span.innerHTML);t.text=span.textContent;
+   const sub={id:crypto.randomUUID?crypto.randomUUID():String(Date.now()+Math.random()),text:'',done:false};
+   if(!Array.isArray(t.subtasks))t.subtasks=[];
+   t.subtasks.push(sub);save();render();
+   const row=grid.querySelector(`[data-task-id="${t.id}"]`);
+   const labels=row?.querySelectorAll('.subtask-label');
+   labels?.[labels.length-1]?.focus();
+   return;
+ }if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();t.html=cleanHTML(span.innerHTML);t.text=span.textContent;const newTask={id:crypto.randomUUID?crypto.randomUUID():String(Date.now()+Math.random()),text:'',html:'',day:displayDay,done:false,history:[],pinnedPast:displayDay<dateKey(new Date())};const at=state.tasks.findIndex(x=>x.id===t.id);state.tasks.splice(at+1,0,newTask);save();render();const target=grid.querySelector(`[data-task-id="${newTask.id}"] .text`);if(target){target.focus();const selection=window.getSelection();const range=document.createRange();range.selectNodeContents(target);range.collapse(false);selection.removeAllRanges();selection.addRange(range)}return}if(e.key==='Tab'){e.preventDefault();if(e.shiftKey){const sel=window.getSelection();let node=sel.anchorNode;let parent=node?.nodeType===1?node:node?.parentElement;const block=parent?.closest('div,p,li');if(block&&span.contains(block)){const n=parseInt(block.style.marginLeft||'0',10);block.style.marginLeft=Math.max(0,n-20)+'px';t.html=cleanHTML(span.innerHTML);save()}}else{insertText('    ')} } });
  }
  li.dataset.taskId=t.id;
  if(!historical){
@@ -365,7 +393,7 @@ function taskRow(t,historical,displayDay,historicalSnapshot=null){
  const content=document.createElement('div');content.className='task-content';content.append(span);
  const subs=makeSubtasks(t,historical);
  if(subs.children.length)content.append(subs);
- if(!historical){const addSub=document.createElement('button');addSub.type='button';addSub.className='subtask-add';addSub.textContent='+ Deloppgave';addSub.setAttribute('aria-label','Legg til deloppgave');addSub.addEventListener('click',()=>{const item={id:crypto.randomUUID?crypto.randomUUID():String(Date.now()+Math.random()),text:'',done:false};t.subtasks.push(item);save();render();const row=grid.querySelector(`[data-task-id="${t.id}"]`);const labels=row?.querySelectorAll('.subtask-label');labels?.[labels.length-1]?.focus()});content.append(addSub)}
+
  li.append(box,content);
  if(!historical){let del=document.createElement('button');del.className='del';del.textContent='×';del.title='Slett oppgave';del.setAttribute('aria-label','Slett oppgave');del.addEventListener('click',()=>{if(confirm('Slette oppgaven?')){state.tasks=state.tasks.filter(x=>x.id!==t.id);save();render()}});li.append(del)}
  return li
@@ -374,7 +402,16 @@ function render(){carry();const w=weekNo(shown);document.getElementById('week').
  list.addEventListener('dragover',e=>{if(!draggedTaskId)return;e.preventDefault();e.dataTransfer.dropEffect='move';list.classList.add('drag-over')});
  list.addEventListener('dragleave',e=>{if(!list.contains(e.relatedTarget))list.classList.remove('drag-over')});
  list.addEventListener('drop',e=>{if(!draggedTaskId)return;e.preventDefault();moveTask(draggedTaskId,key);draggedTaskId=null});for(const t of [...active,...done])list.append(taskRow(t,false,key));for(const t of historical){let snap=t.history.find(h=>(typeof h==='string'?h:h.day)===key);let row=taskRow(t,true,key,typeof snap==='string'?null:snap);row.title='Historikk: oppgaven ble videreført til en senere dag';list.append(row)}let form=document.createElement('form');form.className='add empty-first';let input=document.createElement('textarea');input.placeholder='';input.setAttribute('aria-label',`Ny oppgave med delpunkter ${names[i]}`);let btn=document.createElement('button');btn.type='submit';btn.textContent='+';btn.setAttribute('aria-label','Legg til hele oppgaven');form.append(input,btn);form.addEventListener('click',e=>{if(e.target===form)input.focus()});input.addEventListener('input',()=>{input.style.height='34px';input.style.height=Math.max(34,input.scrollHeight)+'px'});
- input.addEventListener('keydown',e=>{if(e.key==='Tab'){e.preventDefault();const a=input.selectionStart,b=input.selectionEnd;const v=input.value;if(e.shiftKey){let start=v.lastIndexOf('\n',a-1)+1;let remove=v.slice(start).match(/^( {1,4}|\t)/)?.[0]||'';if(remove){input.value=v.slice(0,start)+v.slice(start+remove.length);input.selectionStart=Math.max(start,a-remove.length);input.selectionEnd=Math.max(start,b-remove.length)}}else{input.setRangeText('    ',a,b,'end')}}else if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();form.requestSubmit()}else if(e.key==='Enter'&&e.shiftKey){e.preventDefault();input.setRangeText('\n',input.selectionStart,input.selectionEnd,'end')}});
+ input.addEventListener('keydown',e=>{if(e.key==='Tab'){e.preventDefault();const a=input.selectionStart,b=input.selectionEnd;const v=input.value;if(e.shiftKey){let start=v.lastIndexOf('\n',a-1)+1;let remove=v.slice(start).match(/^( {1,4}|\t)/)?.[0]||'';if(remove){input.value=v.slice(0,start)+v.slice(start+remove.length);input.selectionStart=Math.max(start,a-remove.length);input.selectionEnd=Math.max(start,b-remove.length)}}else{input.setRangeText('    ',a,b,'end')}}else if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();form.requestSubmit()}else if(e.key==='Enter'&&e.shiftKey){
+   e.preventDefault();
+   const value=input.value.trim();
+   if(!value)return;
+   const newId=crypto.randomUUID?crypto.randomUUID():String(Date.now()+Math.random());
+   const task={id:newId,text:value,html:'',day:key,done:false,history:[],subtasks:[{id:crypto.randomUUID?crypto.randomUUID():String(Date.now()+Math.random()),text:'',done:false}],pinnedPast:key<dateKey(new Date())};
+   state.tasks.push(task);save();render();
+   const row=grid.querySelector(`[data-task-id="${newId}"]`);
+   row?.querySelector('.subtask-label')?.focus();
+ }});
  input.addEventListener('blur',()=>{if(input.value.trim())form.requestSubmit()});form.addEventListener('submit',e=>{e.preventDefault();let value=input.value.trim();if(!value)return;const lines=value.replace(/\r/g,'').split('\n');const html=lines.map(line=>{const indentation=(line.match(/^[ \t]*/)||[''])[0].replace(/\t/g,'    ').length;const content=line.trim();const el=document.createElement('div');el.style.marginLeft=(Math.min(12,Math.floor(indentation/4))*20)+'px';el.textContent=content||' ';return el.outerHTML}).join('');const newId=crypto.randomUUID?crypto.randomUUID():String(Date.now()+Math.random());state.tasks.push({id:newId,text:value,html,day:key,done:false,history:[],pinnedPast:key<dateKey(new Date())});save();render();const rows=[...(grid.children[i]?.querySelectorAll('.task:not(.done) .text')||[])];const created=rows.find(el=>el.closest('.task')?.dataset.taskId===newId);if(created)created.focus()});card.append(head);card.append(list);if(actual.length===0)card.insertBefore(form,list);grid.append(card)}}
 document.getElementById('export').addEventListener('click',()=>{const blob=new Blob([JSON.stringify({format:'ukeplanlegger-backup',version:1,exportedAt:new Date().toISOString(),data:state},null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='ukeplanlegger-sikkerhetskopi-'+dateKey(new Date())+'.json';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1500)});
 document.getElementById('import').addEventListener('click',()=>document.getElementById('import-file').click());
