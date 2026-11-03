@@ -150,7 +150,7 @@ html[data-theme="dark"] .subtask input[type="checkbox"]{border-color:#858585}
 html[data-theme="dark"] .subtask input[type="checkbox"]:checked{background:#989898;border-color:#989898}
 /* Hovedoppgaver og deloppgaver deler tekstfarge og dagsbasert synlighet.
    Skriftstørrelsen kan justeres uavhengig. Avkrysningsboksene påvirkes ikke. */
-:root{--task-font-main:14px;--task-font-sub:14px}
+:root{--task-font-main:14px;--task-font-sub:12px}
 .task .task-content>.text{font-size:var(--task-font-main);color:inherit}
 .task .subtask-label{font-family:inherit;font-size:var(--task-font-sub);font-weight:inherit;line-height:1.45;color:inherit}
 .day.today .task:not(.done):not(.carried) .subtask-label{opacity:var(--task-opacity-today)}
@@ -163,9 +163,24 @@ html[data-theme="dark"] .subtask input[type="checkbox"]:checked{background:#9898
 .day.today .task:not(.done):not(.carried) .subtask.done .subtask-label{opacity:var(--task-opacity-today)}
 .day.future .task:not(.done):not(.carried) .subtask.done .subtask-label{opacity:var(--task-opacity-future)}
 .day.past .task:not(.done):not(.carried) .subtask.done .subtask-label{opacity:var(--task-opacity-past)}
+
+/* Mer kompakte deloppgaver, med en mindre boks som følger skriftstørrelsen. */
+.subtasks{margin-top:4px}
+.subtask{padding-top:1px;padding-bottom:1px;gap:6px;line-height:1.25;font-size:var(--task-font-sub)}
+.task .subtask-label{line-height:1.25}
+.subtask input[type="checkbox"]{width:.72em;height:.72em;min-width:.72em;margin:.24em 0 0;border-radius:.2em}
+.subtask input[type="checkbox"]:checked::after{left:25%;top:6%;width:26%;height:53%;border-width:0 1.2px 1.2px 0}
+/* Sletteknappene vises bare ved hover eller tastaturfokus. */
+.task .del,.subtask-delete{visibility:hidden!important;opacity:0!important}
+@media (hover:hover) and (pointer:fine){
+ .task:hover>.del,.task:focus-within>.del{visibility:visible!important;opacity:.65!important}
+ .subtask:hover>.subtask-delete,.subtask:focus-within>.subtask-delete{visibility:visible!important;opacity:.65!important}
+}
+.task .del:focus-visible,.subtask-delete:focus-visible{visibility:visible!important;opacity:1!important}
+/* Berøringsskjermer har ikke musepeker; behold sletting tilgjengelig via fokus. */
 </style>
 </head>
-<body><div class="wrap"><header><div class="nav"><button id="prev" aria-label="Forrige uke">←</button><span class="week-label" id="week"></span><button id="next" aria-label="Neste uke">→</button><div class="menu-wrap"><button class="sync-toggle" id="sync-now" type="button" aria-label="Synkroniser" title="Synkroniser">⟳</button><button class="action menu-toggle" id="menu-toggle" type="button" aria-label="Åpne meny" aria-haspopup="true" aria-expanded="false" aria-controls="app-menu">☰</button><div class="app-menu" id="app-menu" hidden><button id="current" type="button">Denne uken</button><button id="theme-toggle" type="button" aria-label="Bytt mellom lyst og mørkt tema" aria-pressed="false">Mørkt tema</button><div class="menu-separator"></div><div class="contrast-settings" role="group" aria-label="Juster oppgavetekst"><div class="contrast-settings-title">Oppgavetekst – synlighet</div><div class="contrast-setting"><label for="contrast-today">I dag</label><output id="contrast-today-value" for="contrast-today">100 %</output><input id="contrast-today" type="range" min="20" max="100" step="5" value="100"></div><div class="contrast-setting"><label for="contrast-future">Fremtidige dager</label><output id="contrast-future-value" for="contrast-future">50 %</output><input id="contrast-future" type="range" min="20" max="100" step="5" value="50"></div><div class="contrast-setting"><label for="contrast-past">Tidligere dager</label><output id="contrast-past-value" for="contrast-past">50 %</output><input id="contrast-past" type="range" min="20" max="100" step="5" value="50"></div></div><div class="menu-separator"></div><div class="contrast-settings" role="group" aria-label="Skriftstørrelse"><div class="contrast-settings-title">Skriftstørrelse</div><div class="contrast-setting"><label for="font-main">Hovedoppgaver</label><output id="font-main-value" for="font-main">14 px</output><input id="font-main" type="range" min="10" max="24" step="1" value="14"></div><div class="contrast-setting"><label for="font-sub">Deloppgaver</label><output id="font-sub-value" for="font-sub">14 px</output><input id="font-sub" type="range" min="10" max="24" step="1" value="14"></div></div><div class="menu-separator"></div><label class="carry-setting" for="carry-time">Overføring av uferdige oppgaver <input id="carry-time" type="time" value="00:00"></label><button id="test-carry" type="button">Test overføring nå</button><div class="menu-separator"></div><button id="connect-backup" type="button">Velg sikkerhetskopifil</button><button id="export" type="button">Eksporter</button><button id="import" type="button">Importer</button></div></div><input type="file" id="import-file" accept=".json,application/json" hidden></div></header><div id="backup-status" role="status" aria-live="polite" style="font-size:11px;color:#777777;margin:0 0 12px">Lagret OK</div><main class="grid" id="grid"></main></div>
+<body><div class="wrap"><header><div class="nav"><button id="prev" aria-label="Forrige uke">←</button><span class="week-label" id="week"></span><button id="next" aria-label="Neste uke">→</button><div class="menu-wrap"><button class="sync-toggle" id="sync-now" type="button" aria-label="Synkroniser" title="Synkroniser">⟳</button><button class="action menu-toggle" id="menu-toggle" type="button" aria-label="Åpne meny" aria-haspopup="true" aria-expanded="false" aria-controls="app-menu">☰</button><div class="app-menu" id="app-menu" hidden><button id="current" type="button">Denne uken</button><button id="theme-toggle" type="button" aria-label="Bytt mellom lyst og mørkt tema" aria-pressed="false">Mørkt tema</button><div class="menu-separator"></div><div class="contrast-settings" role="group" aria-label="Juster oppgavetekst"><div class="contrast-settings-title">Oppgavetekst – synlighet</div><div class="contrast-setting"><label for="contrast-today">I dag</label><output id="contrast-today-value" for="contrast-today">100 %</output><input id="contrast-today" type="range" min="20" max="100" step="5" value="100"></div><div class="contrast-setting"><label for="contrast-future">Fremtidige dager</label><output id="contrast-future-value" for="contrast-future">50 %</output><input id="contrast-future" type="range" min="20" max="100" step="5" value="50"></div><div class="contrast-setting"><label for="contrast-past">Tidligere dager</label><output id="contrast-past-value" for="contrast-past">50 %</output><input id="contrast-past" type="range" min="20" max="100" step="5" value="50"></div></div><div class="menu-separator"></div><div class="contrast-settings" role="group" aria-label="Skriftstørrelse"><div class="contrast-settings-title">Skriftstørrelse</div><div class="contrast-setting"><label for="font-main">Hovedoppgaver</label><output id="font-main-value" for="font-main">14 px</output><input id="font-main" type="range" min="10" max="24" step="1" value="14"></div><div class="contrast-setting"><label for="font-sub">Deloppgaver</label><output id="font-sub-value" for="font-sub">12 px</output><input id="font-sub" type="range" min="10" max="24" step="1" value="12"></div></div><div class="menu-separator"></div><label class="carry-setting" for="carry-time">Overføring av uferdige oppgaver <input id="carry-time" type="time" value="00:00"></label><button id="test-carry" type="button">Test overføring nå</button><div class="menu-separator"></div><button id="connect-backup" type="button">Velg sikkerhetskopifil</button><button id="export" type="button">Eksporter</button><button id="import" type="button">Importer</button></div></div><input type="file" id="import-file" accept=".json,application/json" hidden></div></header><div id="backup-status" role="status" aria-live="polite" style="font-size:11px;color:#777777;margin:0 0 12px">Lagret OK</div><main class="grid" id="grid"></main></div>
 <script>
 (()=>{'use strict';
 
@@ -187,7 +202,7 @@ for(const key of Object.keys(contrastDefaults)){
  slider.addEventListener('input',()=>{contrastPrefs[key]=Number(slider.value);update();try{localStorage.setItem(CONTRAST_KEY,JSON.stringify(contrastPrefs))}catch{}});
 }
 const FONT_SIZE_KEY='ukeplan-task-font-sizes';
-const fontDefaults={main:14,sub:14};
+const fontDefaults={main:14,sub:12};
 let fontPrefs={...fontDefaults};
 try{const stored=JSON.parse(localStorage.getItem(FONT_SIZE_KEY));if(stored&&typeof stored==='object'){for(const key of Object.keys(fontDefaults)){const v=Number(stored[key]);if(Number.isInteger(v)&&v>=10&&v<=24)fontPrefs[key]=v}}}catch{}
 for(const key of Object.keys(fontDefaults)){
@@ -349,7 +364,7 @@ function ensureSubtasks(t){
 function makeSubtasks(t,historical){
  const ul=document.createElement('ul');ul.className='subtasks';
  for(const item of (t.subtasks||[])){
-   const li=document.createElement('li');li.className='subtask'+(item.done?' done':'');
+   const li=document.createElement('li');li.className='subtask'+(item.done?' done':'');li.dataset.subtaskId=item.id;
    const cb=document.createElement('input');cb.type='checkbox';cb.checked=!!item.done;cb.disabled=historical;cb.setAttribute('aria-label','Fullfør deloppgave: '+item.text);
    if(!historical)cb.addEventListener('change',()=>{item.done=cb.checked;li.classList.toggle('done',item.done);save()});
    const label=document.createElement('span');label.className='subtask-label';label.textContent=item.text;
@@ -374,13 +389,23 @@ function makeSubtasks(t,historical){
      const row=grid.querySelector(`[data-task-id="${t.id}"]`);
      const labels=[...(row?.querySelectorAll('.subtask-label')||[])];
      const nextIndex=t.subtasks.findIndex(x=>x.id===next.id);
-     labels[nextIndex]?.focus();
+     focusSubtask(t.id,next.id);
    })}
    li.append(cb,label);
    if(!historical){const del=document.createElement('button');del.type='button';del.className='subtask-delete';del.textContent='×';del.title='Slett deloppgave';del.setAttribute('aria-label','Slett deloppgave');del.addEventListener('click',()=>{t.subtasks=t.subtasks.filter(x=>x!==item);save();render()});li.append(del)}
    ul.append(li);
  }
  return ul;
+}
+function focusSubtask(taskId,subtaskId){
+ // Focus after the rebuilt week is in the DOM; place caret at the end.
+ const target=[...grid.querySelectorAll('.task')].find(el=>el.dataset.taskId===taskId)
+   ?.querySelector(`[data-subtask-id="${subtaskId}"] .subtask-label`);
+ if(!target)return;
+ target.focus();
+ const selection=window.getSelection(),range=document.createRange();
+ range.selectNodeContents(target);range.collapse(false);
+ selection.removeAllRanges();selection.addRange(range);
 }
 function taskRow(t,historical,displayDay,historicalSnapshot=null){
  if(!historical)ensureSubtasks(t);
@@ -401,7 +426,7 @@ function taskRow(t,historical,displayDay,historicalSnapshot=null){
    t.subtasks.push(sub);save();render();
    const row=grid.querySelector(`[data-task-id="${t.id}"]`);
    const labels=row?.querySelectorAll('.subtask-label');
-   labels?.[labels.length-1]?.focus();
+   focusSubtask(t.id,sub.id);
    return;
  }if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();t.html=cleanHTML(span.innerHTML);t.text=span.textContent;const newTask={id:crypto.randomUUID?crypto.randomUUID():String(Date.now()+Math.random()),text:'',html:'',day:displayDay,done:false,history:[],pinnedPast:displayDay<dateKey(new Date())};const at=state.tasks.findIndex(x=>x.id===t.id);state.tasks.splice(at+1,0,newTask);save();render();const target=grid.querySelector(`[data-task-id="${newTask.id}"] .text`);if(target){target.focus();const selection=window.getSelection();const range=document.createRange();range.selectNodeContents(target);range.collapse(false);selection.removeAllRanges();selection.addRange(range)}return}if(e.key==='Tab'){e.preventDefault();if(e.shiftKey){const sel=window.getSelection();let node=sel.anchorNode;let parent=node?.nodeType===1?node:node?.parentElement;const block=parent?.closest('div,p,li');if(block&&span.contains(block)){const n=parseInt(block.style.marginLeft||'0',10);block.style.marginLeft=Math.max(0,n-20)+'px';t.html=cleanHTML(span.innerHTML);save()}}else{insertText('    ')} } });
  }
@@ -435,7 +460,7 @@ function render(){carry();const w=weekNo(shown);document.getElementById('week').
    const task={id:newId,text:value,html:'',day:key,done:false,history:[],subtasks:[{id:crypto.randomUUID?crypto.randomUUID():String(Date.now()+Math.random()),text:'',done:false}],pinnedPast:key<dateKey(new Date())};
    state.tasks.push(task);save();render();
    const row=grid.querySelector(`[data-task-id="${newId}"]`);
-   row?.querySelector('.subtask-label')?.focus();
+   focusSubtask(task.id,task.subtasks[0].id);
  }});
  input.addEventListener('blur',()=>{if(input.value.trim())form.requestSubmit()});form.addEventListener('submit',e=>{e.preventDefault();let value=input.value.trim();if(!value)return;const lines=value.replace(/\r/g,'').split('\n');const html=lines.map(line=>{const indentation=(line.match(/^[ \t]*/)||[''])[0].replace(/\t/g,'    ').length;const content=line.trim();const el=document.createElement('div');el.style.marginLeft=(Math.min(12,Math.floor(indentation/4))*20)+'px';el.textContent=content||' ';return el.outerHTML}).join('');const newId=crypto.randomUUID?crypto.randomUUID():String(Date.now()+Math.random());state.tasks.push({id:newId,text:value,html,day:key,done:false,history:[],pinnedPast:key<dateKey(new Date())});save();render();const rows=[...(grid.children[i]?.querySelectorAll('.task:not(.done) .text')||[])];const created=rows.find(el=>el.closest('.task')?.dataset.taskId===newId);if(created)created.focus()});card.append(head);card.append(list);if(actual.length===0)card.insertBefore(form,list);grid.append(card)}}
 document.getElementById('export').addEventListener('click',()=>{const blob=new Blob([JSON.stringify({format:'ukeplanlegger-backup',version:1,exportedAt:new Date().toISOString(),data:state},null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='ukeplanlegger-sikkerhetskopi-'+dateKey(new Date())+'.json';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1500)});
