@@ -371,7 +371,17 @@ function makeSubtasks(t,historical){
    if(!historical){label.contentEditable='true';label.setAttribute('role','textbox');label.setAttribute('aria-label','Rediger deloppgave');label.addEventListener('input',()=>{item.text=label.textContent;save()});label.addEventListener('keydown',e=>{
      if(e.key!=='Enter')return;
      e.preventDefault();
-     if(!e.shiftKey){label.blur();return}
+     if(!e.shiftKey){
+       // Enter i en deloppgave oppretter en ny hovedoppgave rett etter forelderen.
+       item.text=label.textContent;
+       const newTask={id:crypto.randomUUID?crypto.randomUUID():String(Date.now()+Math.random()),text:'',html:'',day:t.day,done:false,history:[],subtasks:[],pinnedPast:t.day<dateKey(new Date())};
+       const at=state.tasks.findIndex(x=>x.id===t.id);
+       state.tasks.splice(at+1,0,newTask);
+       save();render();
+       const target=[...grid.querySelectorAll('.task')].find(el=>el.dataset.taskId===newTask.id)?.querySelector('.text');
+       if(target){target.focus();const selection=window.getSelection(),range=document.createRange();range.selectNodeContents(target);range.collapse(false);selection.removeAllRanges();selection.addRange(range)}
+       return;
+     }
      // Shift+Enter lager neste deloppgave. Shift+Enter igjen på en tom
      // deloppgave avslutter deloppgavemodus og flytter fokus til hovedoppgaven.
      const currentText=label.textContent.trim();
