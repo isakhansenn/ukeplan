@@ -468,7 +468,7 @@ function makeSubtasks(t,historical){
      if(!currentText){
        t.subtasks=t.subtasks.filter(x=>x!==item);
        save();render();
-       const main=grid.querySelector(`[data-task-id="${t.id}"] .text`);
+       const main=[...grid.querySelectorAll('.task:not(.carried)')].find(el=>el.dataset.taskId===t.id)?.querySelector('.text');
        if(main){main.focus();const selection=window.getSelection();const range=document.createRange();range.selectNodeContents(main);range.collapse(false);selection.removeAllRanges();selection.addRange(range)}
        return;
      }
@@ -515,7 +515,7 @@ function makeSubtasks(t,historical){
 }
 function focusSubtask(taskId,subtaskId){
  // Focus after the rebuilt week is in the DOM; place caret at the end.
- const target=[...grid.querySelectorAll('.task')].find(el=>el.dataset.taskId===taskId)
+ const target=[...grid.querySelectorAll('.task:not(.carried)')].find(el=>el.dataset.taskId===taskId)
    ?.querySelector(`[data-subtask-id="${subtaskId}"] .subtask-label`);
  if(!target)return;
  target.focus();
