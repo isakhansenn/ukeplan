@@ -206,6 +206,17 @@ html[data-theme="dark"] .subtask input[type="checkbox"]:checked{background:#9898
 @media (hover:none){.task .subtask-toggle{opacity:.65;visibility:visible}}
 /* Justerbar bredde per dag, med horisontal rulling ved behov. */
 #grid.grid{grid-auto-columns:var(--ukeplan-day-width,max(190px,calc((100% - 36px)/5)))!important}
+
+/* Flytt deloppgaver innen samme hovedoppgave uten å påvirke hovedoppgavens draområde. */
+.subtask{position:relative}
+.subtask-drag{position:absolute;left:-12px;top:0;width:13px;min-height:21px;padding:0;border:0;background:transparent;color:inherit;opacity:0;cursor:grab;font-size:12px;line-height:21px;user-select:none}
+.subtask-drag:active{cursor:grabbing}
+@media(hover:hover) and (pointer:fine){.subtask:hover>.subtask-drag,.subtask-drag:hover{opacity:.65}}
+.subtask-drag:focus-visible{opacity:1;outline:1px solid currentColor;outline-offset:1px}
+@media(hover:none){.subtask-drag{opacity:.5}}
+.subtask.subtask-dragging{opacity:.4}
+.subtask.subtask-drop-before{box-shadow:inset 0 2px #929292}
+.subtask.subtask-drop-after{box-shadow:inset 0 -2px #929292}
 </style>
 </head>
 <body><div class="wrap"><header><div class="nav"><button id="prev" aria-label="Forrige uke">←</button><span class="week-label" id="week"></span><button id="next" aria-label="Neste uke">→</button><div class="menu-wrap"><button class="sync-toggle" id="sync-now" type="button" aria-label="Synkroniser" title="Synkroniser">⟳</button><button class="action menu-toggle" id="menu-toggle" type="button" aria-label="Åpne meny" aria-haspopup="true" aria-expanded="false" aria-controls="app-menu">☰</button><div class="app-menu" id="app-menu" hidden><button id="current" type="button">Denne uken</button><button id="theme-toggle" type="button" aria-label="Bytt mellom lyst og mørkt tema" aria-pressed="false">Mørkt tema</button><div class="menu-separator"></div><div class="contrast-settings" role="group" aria-label="Juster oppgavetekst"><div class="contrast-settings-title">Oppgavetekst – synlighet</div><div class="contrast-setting"><label for="contrast-today">I dag</label><output id="contrast-today-value" for="contrast-today">100 %</output><input id="contrast-today" type="range" min="20" max="100" step="5" value="100"></div><div class="contrast-setting"><label for="contrast-future">Fremtidige dager</label><output id="contrast-future-value" for="contrast-future">50 %</output><input id="contrast-future" type="range" min="20" max="100" step="5" value="50"></div><div class="contrast-setting"><label for="contrast-past">Tidligere dager</label><output id="contrast-past-value" for="contrast-past">50 %</output><input id="contrast-past" type="range" min="20" max="100" step="5" value="50"></div></div><div class="menu-separator"></div><div class="contrast-settings" role="group" aria-label="Skriftstørrelse"><div class="contrast-settings-title">Skriftstørrelse</div><div class="contrast-setting"><label for="font-main">Hovedoppgaver</label><output id="font-main-value" for="font-main">14 px</output><input id="font-main" type="range" min="10" max="24" step="1" value="14"></div><div class="contrast-setting"><label for="font-sub">Deloppgaver</label><output id="font-sub-value" for="font-sub">12 px</output><input id="font-sub" type="range" min="10" max="24" step="1" value="12"></div></div><div class="menu-separator"></div><div class="contrast-settings" role="group" aria-label="Bredde på dager"><div class="contrast-settings-title">Bredde på dager</div><div class="contrast-setting"><label for="day-width">Kolonnebredde</label><output id="day-width-value" for="day-width">Automatisk</output><input id="day-width" type="range" min="0" max="500" step="10" value="0" aria-label="Juster bredden på alle dagene"></div><button id="day-width-auto" type="button">Tilpass til vinduet</button></div><div class="menu-separator"></div><label class="carry-setting" for="carry-time">Overføring av uferdige oppgaver <input id="carry-time" type="time" value="00:00"></label><button id="test-carry" type="button">Test overføring nå</button><div class="menu-separator"></div><button id="connect-backup" type="button">Velg sikkerhetskopifil</button><button id="export" type="button">Eksporter</button><button id="import" type="button">Importer</button></div></div><input type="file" id="import-file" accept=".json,application/json" hidden></div></header><div id="backup-status" role="status" aria-live="polite" style="font-size:11px;color:#777777;margin:0 0 12px">Lagret OK</div><main class="grid" id="grid"></main></div>
@@ -410,6 +421,25 @@ function ensureSubtasks(t){
  }
  if(found){t.html=kept.join('');t.text=box.textContent;save()}
 }
+let draggedSubtask=null;
+function reorderSubtask(t,sourceId,targetId,after=false){
+ if(sourceId===targetId||!Array.isArray(t.subtasks))return;
+ const from=t.subtasks.findIndex(x=>x.id===sourceId);
+ if(from<0)return;
+ const [item]=t.subtasks.splice(from,1);
+ const to=t.subtasks.findIndex(x=>x.id===targetId);
+ if(to<0){t.subtasks.splice(from,0,item);return}
+ t.subtasks.splice(to+(after?1:0),0,item);
+ save();render();
+}
+function shiftSubtask(t,id,step){
+ const at=t.subtasks.findIndex(x=>x.id===id),to=at+step;
+ if(at<0||to<0||to>=t.subtasks.length)return;
+ [t.subtasks[at],t.subtasks[to]]=[t.subtasks[to],t.subtasks[at]];
+ save();render();
+ const handle=[...grid.querySelectorAll('.task')].find(x=>x.dataset.taskId===t.id)?.querySelector(`[data-subtask-id="${id}"] .subtask-drag`);
+ handle?.focus();
+}
 function makeSubtasks(t,historical){
  const ul=document.createElement('ul');ul.className='subtasks';
  for(const item of (t.subtasks||[])){
@@ -444,12 +474,39 @@ function makeSubtasks(t,historical){
      }
      const next={id:crypto.randomUUID?crypto.randomUUID():String(Date.now()+Math.random()),text:'',done:false};
      const index=t.subtasks.findIndex(x=>x.id===item.id);
-     t.subtasks.splice(index+1,0,next);save();render();
-     const row=grid.querySelector(`[data-task-id="${t.id}"]`);
-     const labels=[...(row?.querySelectorAll('.subtask-label')||[])];
-     const nextIndex=t.subtasks.findIndex(x=>x.id===next.id);
+     t.subtasks.splice(index+1,0,next);
+     // En ny deloppgave skal alltid være synlig og klar for skriving.
+     t.subtasksCollapsed=false;
+     save();render();
      focusSubtask(t.id,next.id);
+     requestAnimationFrame(()=>focusSubtask(t.id,next.id));
    })}
+   if(!historical){
+     const grip=document.createElement('button');grip.type='button';grip.className='subtask-drag';
+     grip.textContent='⠿';grip.draggable=true;grip.title='Dra for å endre rekkefølge. Alt + pil opp/ned fungerer også.';
+     grip.setAttribute('aria-label','Flytt deloppgave: '+item.text);
+     grip.addEventListener('keydown',e=>{if(e.altKey&&(e.key==='ArrowUp'||e.key==='ArrowDown')){e.preventDefault();shiftSubtask(t,item.id,e.key==='ArrowUp'?-1:1)}});
+     grip.addEventListener('dragstart',e=>{
+       e.stopPropagation();draggedSubtask={taskId:t.id,subId:item.id};
+       e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('text/plain','subtask:'+item.id);
+       li.classList.add('subtask-dragging');
+     });
+     grip.addEventListener('dragend',()=>{draggedSubtask=null;document.querySelectorAll('.subtask-dragging,.subtask-drop-before,.subtask-drop-after').forEach(x=>x.classList.remove('subtask-dragging','subtask-drop-before','subtask-drop-after'))});
+     li.addEventListener('dragover',e=>{
+       if(!draggedSubtask||draggedSubtask.taskId!==t.id||draggedSubtask.subId===item.id)return;
+       e.preventDefault();e.stopPropagation();e.dataTransfer.dropEffect='move';
+       li.classList.remove('subtask-drop-before','subtask-drop-after');
+       li.classList.add(e.clientY>li.getBoundingClientRect().top+li.offsetHeight/2?'subtask-drop-after':'subtask-drop-before');
+     });
+     li.addEventListener('dragleave',e=>{if(!li.contains(e.relatedTarget))li.classList.remove('subtask-drop-before','subtask-drop-after')});
+     li.addEventListener('drop',e=>{
+       if(!draggedSubtask||draggedSubtask.taskId!==t.id)return;
+       e.preventDefault();e.stopPropagation();
+       const source=draggedSubtask.subId,after=li.classList.contains('subtask-drop-after');draggedSubtask=null;
+       reorderSubtask(t,source,item.id,after);
+     });
+     li.append(grip);
+   }
    li.append(cb,label);
    if(!historical){const del=document.createElement('button');del.type='button';del.className='subtask-delete';del.textContent='×';del.title='Slett deloppgave';del.setAttribute('aria-label','Slett deloppgave');del.addEventListener('click',()=>{t.subtasks=t.subtasks.filter(x=>x!==item);save();render()});li.append(del)}
    ul.append(li);
@@ -495,9 +552,9 @@ function taskRow(t,historical,displayDay,historicalSnapshot=null){
    handle.addEventListener('dragstart',e=>{draggedTaskId=t.id;e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('text/plain',t.id);li.classList.add('dragging')});
    handle.addEventListener('dragend',()=>{draggedTaskId=null;document.querySelectorAll('.drag-over,.dragging').forEach(el=>el.classList.remove('drag-over','dragging'))});
    li.append(handle);
-   li.addEventListener('dragover',e=>{if(!draggedTaskId||draggedTaskId===t.id)return;e.preventDefault();e.stopPropagation();e.dataTransfer.dropEffect='move';li.classList.add('drag-over')});
+   li.addEventListener('dragover',e=>{if(draggedSubtask)return;if(!draggedTaskId||draggedTaskId===t.id)return;e.preventDefault();e.stopPropagation();e.dataTransfer.dropEffect='move';li.classList.add('drag-over')});
    li.addEventListener('dragleave',()=>li.classList.remove('drag-over'));
-   li.addEventListener('drop',e=>{if(!draggedTaskId)return;e.preventDefault();e.stopPropagation();moveTask(draggedTaskId,displayDay,t.id);draggedTaskId=null});
+   li.addEventListener('drop',e=>{if(draggedSubtask)return;if(!draggedTaskId)return;e.preventDefault();e.stopPropagation();moveTask(draggedTaskId,displayDay,t.id);draggedTaskId=null});
  }
  const content=document.createElement('div');content.className='task-content';content.append(span);
  const subs=makeSubtasks(t,historical);
